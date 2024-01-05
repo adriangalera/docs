@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkhacking=self.webpackChunkhacking||[]).push([[7641],{538:a=>{a.exports=JSON.parse('{"label":"facebook","permalink":"/hacking/blog/tags/facebook","allTagsPath":"/hacking/blog/tags","count":1,"unlisted":false}')}}]);
