@@ -1,5 +1,5 @@
 ---
-slug: /php-security
+slug: /languages/php
 pagination_next: null
 pagination_prev: null
 ---
