@@ -39,6 +39,7 @@ const config = {
         docs: {
           sidebarPath: './sidebars.js',
           routeBasePath: '/', // Serve the docs at the site's root
+          exclude: ['/private'],
         },
         blog: false,
       }),

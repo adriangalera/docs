@@ -1,5 +1,5 @@
 ---
-slug: /tooling/fuff
+slug: /tooling/ffuf
 pagination_next: null
 pagination_prev: null
 ---
