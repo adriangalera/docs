@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkhacking=self.webpackChunkhacking||[]).push([[7033],{9707:a=>{a.exports=JSON.parse('{"label":"hello","permalink":"/hacking/blog/tags/hello","allTagsPath":"/hacking/blog/tags","count":2,"unlisted":false}')}}]);
