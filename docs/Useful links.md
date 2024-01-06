@@ -1,3 +1,9 @@
+---
+slug: /useful-links
+pagination_next: null
+pagination_prev: null
+---
+
 | Name                          | Description                                                                  | Link                                                                                                                          |
 |-------------------------------|------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|
 | pentestbook.six2dez.com       | General guides on pentesting                                                 | https://pentestbook.six2dez.com/                                                                                              |

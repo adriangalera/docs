@@ -42,6 +42,10 @@ const config = {
           exclude: ['/private'],
         },
         blog: false,
+        gtag: {
+          trackingID: 'G-S8VGYBN25C',
+          anonymizeIP: true,
+        },
       }),
     ],
   ],
