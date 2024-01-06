@@ -43,6 +43,8 @@ const config = {
         blog: {
           showReadingTime: true,
           routeBasePath: '/', // Serve the blog at the site's root
+          blogSidebarTitle: 'All posts',
+          blogSidebarCount: 'ALL',
         },
         gtag: {
           trackingID: 'G-S8VGYBN25C',
@@ -75,7 +77,7 @@ const config = {
       prism: {
         theme: prismThemes.github,
         darkTheme: prismThemes.dracula,
-        additionalLanguages: ['php', 'powershell'],
+        additionalLanguages: ['php', 'powershell', 'java'],
       },
     }),
 };
