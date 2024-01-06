@@ -1,4 +1,5 @@
 ---
+slug: sns-firebase-android-ios
 title: "Push notifications SNS and Firebase"
 tags: [aws, sns, mobile, java, backend, firebase]
 ---
