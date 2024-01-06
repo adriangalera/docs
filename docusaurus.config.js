@@ -8,12 +8,12 @@ import {themes as prismThemes} from 'prism-react-renderer';
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'My Hacking notes',
+  title: 'agalera.eu',
   // Set the production url of your site here
   url: 'https://www.agalera.eu',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/hacking',
+  baseUrl: '/',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
@@ -39,10 +39,11 @@ const config = {
       ({
         docs: {
           sidebarPath: './sidebars.js',
-          routeBasePath: '/', // Serve the docs at the site's root
-          exclude: ['/private'],
         },
-        blog: false,
+        blog: {
+          showReadingTime: true,
+          routeBasePath: '/', // Serve the blog at the site's root
+        },
         gtag: {
           trackingID: 'G-S8VGYBN25C',
           anonymizeIP: true,
@@ -57,13 +58,18 @@ const config = {
       // Replace with your project's social card
       image: 'img/docusaurus-social-card.jpg',
       navbar: {
-        title: 'Hacking notes',
+        title: 'agalera.eu',
         logo: {
-          alt: 'Hacking notes',
+          alt: 'agalera.eu',
           src: 'img/logo.svg',
         },
         items: [
-    
+          {
+            type: 'docSidebar',
+            sidebarId: 'tutorialSidebar',
+            position: 'left',
+            label: 'Docs',
+          },
         ],
       },
       prism: {
