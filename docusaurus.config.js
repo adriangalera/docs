@@ -50,6 +50,9 @@ const config = {
           trackingID: 'G-S8VGYBN25C',
           anonymizeIP: true,
         },
+        theme: {
+          customCss: './static/css/custom.css',
+        },
       }),
     ],
   ],
