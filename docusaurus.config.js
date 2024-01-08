@@ -72,6 +72,7 @@ const config = {
         additionalLanguages: ['php', 'powershell', 'java'],
       },
     }),
+    plugins: [require.resolve('docusaurus-lunr-search')],
 };
 
 export default config;
