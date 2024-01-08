@@ -13,12 +13,12 @@ const config = {
   url: 'https://www.agalera.eu',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/',
+  baseUrl: '/docs',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
   organizationName: 'adriangalera', // Usually your GitHub org/user name.
-  projectName: 'hacking', // Usually your repo name.
+  projectName: 'docs', // Usually your repo name.
 
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
@@ -39,10 +39,10 @@ const config = {
       ({
         docs: {
           sidebarPath: './sidebars.js',
+          routeBasePath: '/', // Serve the blog at the site's root
         },
         blog: {
           showReadingTime: true,
-          routeBasePath: '/', // Serve the blog at the site's root
           blogSidebarTitle: 'All posts',
           blogSidebarCount: 'ALL',
         },
