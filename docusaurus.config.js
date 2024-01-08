@@ -41,11 +41,7 @@ const config = {
           sidebarPath: './sidebars.js',
           routeBasePath: '/', // Serve the blog at the site's root
         },
-        blog: {
-          showReadingTime: true,
-          blogSidebarTitle: 'All posts',
-          blogSidebarCount: 'ALL',
-        },
+        blog: false,
         gtag: {
           trackingID: 'G-S8VGYBN25C',
           anonymizeIP: true,
@@ -68,14 +64,7 @@ const config = {
           alt: 'agalera.eu',
           src: 'img/logo.svg',
         },
-        items: [
-          {
-            type: 'docSidebar',
-            sidebarId: 'tutorialSidebar',
-            position: 'left',
-            label: 'Docs',
-          },
-        ],
+        items: [],
       },
       prism: {
         theme: prismThemes.github,
