@@ -2,7 +2,6 @@
 slug: /write-up/htb/easy/sau
 pagination_next: null
 pagination_prev: null
-draft: true
 ---
 
 ## Enumeration
