@@ -15,11 +15,11 @@ If you are trying to discover a SQL injection and you fail, remember that you mi
 
 | Character | URL Encoded Character |
 | --------- | --------------------- |
-|' |	%27 |
-|" |	%22 |
-|# |	%23 |
-|; |	%3B |
-|) |	%29 |
+|'          | %27                   |
+|"          | %22                   |
+|#          | %23                   |
+|;          | %3B                   |
+|)          | %29                   |
 
 ## Query logic
 
