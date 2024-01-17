@@ -22,3 +22,9 @@ xfreerdp /v:10.10.10.132 /d:HTB /u:administrator /p:'Password0@' /drive:linux,/h
 ```
 
 To access the directory, we can connect to \\tsclient\ in the Windows machine.
+
+Enable clipboard: `+clipboard`, e.g:
+
+```bash
+xfreerdp /v:10.129.202.146 /u:htb-student_adm /p:Academy_student_DA! +clipboard /timeout:10000
+```
