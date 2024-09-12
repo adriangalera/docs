@@ -220,7 +220,7 @@ Now the AIM-9 will start a growl noise that will be interrupted when they find a
 
 ### DM mode
 
-DM stands for Dogfight mode.
+DM stands for Dogfight Missile mode.
 
 WIP
 
