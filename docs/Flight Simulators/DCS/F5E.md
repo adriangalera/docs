@@ -154,9 +154,9 @@ Fly downwind leg over the airport. The approach starts at 3NM and must be perfor
 
 :::tip
 **AoA landing indicator**
-- ⬇️: slow down
+- ⬇️: too slow, speed up
 - 0️⃣: On correct speed
-- ⬆️: speed up
+- ⬆️: too fast, slow down
 :::
 
 | Operation                                            | Control      |
