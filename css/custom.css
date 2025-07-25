@@ -1,1 +1,13 @@
-.iframe-holder{align-items:center;display:flex;justify-content:center;padding-bottom:5px}.iframe-holder>iframe{border-width:0;height:400px;padding:0;width:60%}
+.iframe-holder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 5px;
+}
+
+.iframe-holder > iframe {
+  padding: 0;
+  border-width: 0;
+  width: 60%;
+  height: 400px
+}
