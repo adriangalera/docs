@@ -5,6 +5,8 @@ pagination_prev: null
 ---
 When trying to get Remote Code Execution most of the times we get a non-interactive shell.
 
+# When python is available
+
 In order to get a better shell, we could the following commands:
 
 ```bash
@@ -15,3 +17,15 @@ stty raw -echo; fg
 ```
 
 You can find mmore methods to improve the shell here https://blog.ropnop.com/upgrading-simple-shells-to-fully-interactive-ttys/
+
+# No python available
+
+```bash
+script /dev/null -c bash
+```
+
+or
+
+```bash
+stty raw -echo; fg
+```
