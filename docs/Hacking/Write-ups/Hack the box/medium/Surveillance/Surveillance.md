@@ -2,7 +2,6 @@
 slug: /write-up/htb/medium/surveillance
 pagination_next: null
 pagination_prev: null
-draft: true
 ---
 
 ## Enumeration
