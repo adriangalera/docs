@@ -1,0 +1,12 @@
+1|gael|gael@artificial.htb|c99175974b6e192936d97224638a34f8
+2|mark|mark@artificial.htb|0f3d8c76530022670f1c6029eed09ccb
+3|robert|robert@artificial.htb|b606c5f5136170f15444251665638b36
+4|royer|royer@artificial.htb|bc25b1f80f544c0ab451c02a3dca9fc6
+5|mary|mary@artificial.htb|bf041041e57f1aff3be7ea1abd6129d0
+6|fuckkkk|heneja3435@kloudis.com|32a9ea26028ec71f6f9b57ec834f1d8c
+7|hacker|hacker@hacker.com|d6a6bc0db10694a2d90e3a69648f3a03
+8|1234|a@a.com|d16fb36f0911f878998c136191af705e
+9|1234a|b@a.com|81dc9bdb52d04dc20036dbd8313ed055
+
+c99175974b6e192936d97224638a34f8:mattp005numbertwo
+bc25b1f80f544c0ab451c02a3dca9fc6:marwinnarak043414036
