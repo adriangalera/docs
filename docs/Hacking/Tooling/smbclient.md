@@ -47,3 +47,5 @@ smb: \>
 When you're connected to the smb server you can use the same commands as in FTP.
 
 If you see this error: `protocol negotiation failed: NT_STATUS_NOT_SUPPORTED`, you need to configure min/max protocol versions, see: https://unix.stackexchange.com/questions/562550/smbclient-protocol-negotiation-failed
+
+We can download files with `get` and `mget` (for multiples files)
