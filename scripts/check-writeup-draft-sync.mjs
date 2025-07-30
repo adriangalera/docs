@@ -8,16 +8,17 @@ const FgGreen = "\x1b[32m"
 
 
 const extractMachineData = () => {
-  const extractName = (path) => { const sp = path.split("/"); return sp[sp.length - 1] }
+  const extractName = (path) => { const sp = path.split("/"); return sp[sp.length - 1].replace(".md", "") }
   const machinePaths = glob.globSync(`${WRITE_UP_PATH}/*`)
   const machineMap = {}
   for (const machinePath of machinePaths) {
-    machineMap[extractName(machinePath)] = machinePath
+    const machineName = extractName(machinePath)
+    machineMap[machineName] = machinePath
   }
   return machineMap
 }
 
-const writeupPath = (machineName, machinePath) => machinePath + "/" + machineName + ".md"
+const writeupPath = (machineName, machinePath) => machinePath
 
 const isDraft = (writeUpPath) => fs.readFileSync(writeUpPath, 'utf8').includes("draft: true")
 

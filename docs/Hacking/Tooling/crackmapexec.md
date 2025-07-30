@@ -10,7 +10,13 @@ Tool for network pentesting
 Will try to determine the users of a system by trying with different `rid``
 
 ```bash
-crackmapexec smb 10.10.11.236 -u anonymous -p "" --rid-brute 10000
+crackmapexec smb 10.10.11.236 -u anonymous -p "" --rid-brute 10000 > u.txt
+```
+
+Now we can delete useless users:
+
+```bash
+cat u.txt |grep -i user |rev |cut -f2 -d ' ' |rev |grep FLUFFY |cut -f2 -d '\' |grep -Ev (DC|SVC) |tail -n +4 > users.txt
 ```
 
 ## Password spraying
