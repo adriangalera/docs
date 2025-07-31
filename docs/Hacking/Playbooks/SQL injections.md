@@ -3,6 +3,8 @@ slug: /playbooks/sqli
 pagination_next: null
 pagination_prev: null
 ---
+# SQL Injections
+
 This article describes some tricks for successful SQL injection. The commands describe here apply only for MySQL/MariaDB, but similar approach can be taken for any other relational databases.
 
 ## Comments

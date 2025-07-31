@@ -3,6 +3,7 @@ slug: /playbooks/file-transfer
 pagination_next: null
 pagination_prev: null
 ---
+# File transfer
 
 How to extract/send files from the machines to the attacker machine.
 

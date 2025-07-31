@@ -3,6 +3,7 @@ slug: /playbooks/owasp
 pagination_next: null
 pagination_prev: null
 ---
+# OWASP TOP 10
 
 In https://owasp.org/Top10/ website, you can see what are the most common vulnerabilities to exploit.
 

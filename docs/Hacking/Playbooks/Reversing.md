@@ -6,6 +6,8 @@ toc_min_heading_level: 2
 toc_max_heading_level: 5
 ---
 
+# Reversing
+
 There are a series of challenges where you are given a binary file and you need to be able to obtain the flag inside. In order to do so, you need to perform Reverse engineering. In order to do so, you should use a debugger or a decompiler (or both).
 
 The first step is to use as a regular user and pay attention to the strings appearing in the UI. Later, we can search those strings in the decompiler.

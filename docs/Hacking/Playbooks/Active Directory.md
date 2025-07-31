@@ -4,9 +4,17 @@ pagination_next: null
 pagination_prev: null
 ---
 
+# Active Directory
+
+This page contains a handful source of Active Directory AD commands
+
+## Powershell
+
+All the commands listed here as supposed to be executed from a Windows machine with access to powershell. Similar actions can be executed from a Linux machine but with other commands.
+
 Reference: https://learn.microsoft.com/en-us/powershell/module/activedirectory/?view=windowsserver2022-ps
 
-## Users
+### Users
 
 Add to the domain
 
@@ -43,7 +51,7 @@ Get all properties:
 Get-ADUser -Identity amasters -Properties *
 ```
 
-## Unlock account
+### Unlock account
 
 Unlock account:
 
@@ -61,7 +69,7 @@ Force change password after next logon:
 Set-ADUser -Identity amasters -ChangePasswordAtLogon $true
 ```
 
-## Organization unit
+### Organization unit
 
 Create a new OU under some path
 ```powershell
@@ -78,7 +86,7 @@ or by Common name:
 Move-ADObject -Identity "CN=a.callisto,OU=IT,OU=HQ-NYC,OU=Employees,OU=Corp,DC=INLANEFREIGHT,DC=LOCAL" -TargetPath "OU=Analysts,OU=IT,OU=HQ-NYC,OU=Employees,OU=Corp,DC=INLANEFREIGHT,DC=LOCAL"
 ```
 
-## Security group
+### Security group
 
 ```powershell
 New-ADGroup -Name "Security Analysts" -SamAccountName analysts -GroupCategory Security -GroupScope Global -DisplayName "Security Analysts" -Path "OU=Analysts,OU=IT,OU=HQ-NYC,OU=Employees,OU=Corp,DC=INLANEFREIGHT,DC=LOCAL" -Description "Members of this group are Security Analysts under the IT OU"
@@ -89,7 +97,7 @@ Add users to the group:
 Add-ADGroupMember -Identity analysts -Members ACepheus,OStarchaser,ACallisto
 ```
 
-## Security group policy
+### Security group policy
 
 Get by name:
 
@@ -111,7 +119,7 @@ New-GPLink -Name "Security Analysts Control" -Target "ou=Analysts,ou=IT,OU=HQ-NY
 
 To edit the security group policy it's better to do it from the UI, using the Group Policy Management Center (GPMC) available in Server Management > Tools.
 
-## Computer
+### Computer
 
 Add a computer to the domain, credentials refer to the user whose credentials we will use to authorize the join:
 

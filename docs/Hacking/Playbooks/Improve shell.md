@@ -3,9 +3,11 @@ slug: /playbooks/improve-shell
 pagination_next: null
 pagination_prev: null
 ---
-When trying to get Remote Code Execution most of the times we get a non-interactive shell.
+# Improve shell
 
-# When python is available
+When trying to get Remote Code Execution most of the times we get a non-interactive shell. This page list some ways of improving the shitty shell to an interactive one.
+
+## When python is available
 
 In order to get a better shell, we could the following commands:
 
@@ -18,7 +20,7 @@ stty raw -echo; fg
 
 You can find mmore methods to improve the shell here https://blog.ropnop.com/upgrading-simple-shells-to-fully-interactive-ttys/
 
-# No python available
+## No python available
 
 ```bash
 script /dev/null -c bash
