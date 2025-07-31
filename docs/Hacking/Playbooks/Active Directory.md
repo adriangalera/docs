@@ -146,3 +146,11 @@ You can move the computer to another OU by running:
 ```powershell
 Move-ADObject -Identity "name" -TargetPath "OU=Analysts,OU=IT,OU=HQ-NYC,OU=Employees,OU=Corp,DC=INLANEFREIGHT,DC=LOCAL"
 ```
+
+## Bash
+
+Add one user to a group on behalf of another user (-U)
+
+```bash
+net rpc group addmem "SERVICE ACCOUNTS@FLUFFY.HTB" "p.agila" -U "fluffy.htb"/"P.AGILA"%"prometheusx-303" -S 10.10.11.69
+``
