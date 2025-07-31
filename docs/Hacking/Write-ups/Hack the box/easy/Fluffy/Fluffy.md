@@ -185,4 +185,45 @@ hashcat --show -m 5600 -a 0 pagilahash /usr/share/wordlists/rockyou.txt
 
 prometheusx-303
 
+### Bloodhound
+
 From the LDAP dump, we know that this user is a Service Account Manager.
+
+We can use bloodhound to analyze the Active Directory data:
+
+```bash
+bloodhound-python -u "p.agila@fluffy.htb" -p "prometheusx-303" -ns 10.10.11.69 -d fluffy.htb -c all -dc dc01.fluffy.htb --zip
+```
+
+It is really import to collect all the fields, otherwise some permission declaration will not be present in the graph database. Also, the key was provide the `-dc` flag.
+
+Using the bloodhound UI, we can see an interesting path: p.agila user reaches to the winrm_svc account, which most likely will allow us to connect to the machine with evil-winrm.
+
+First, we need to add the user p.agila to SERVICE_ACCOUNTS group:
+
+```bash
+net rpc group addmem "SERVICE ACCOUNTS@FLUFFY.HTB" "p.agila" -U "fluffy.htb"/"P.AGILA"%"prometheusx-303" -S 10.10.11.69
+```
+
+The msDS-KeyCredentialLink attribute is a multi-valued attribute on AD user or computer objects used to store public key material (or references to it) for passwordless authentication methods like Windows Hello for Business (WHfB) and FIDO2 security keys. When a user attempts to authenticate using such a credential, the system presents a cryptographic proof tied to the private key, and AD validates it against the public key material linked via this attribute.
+
+Attackers with write access to an account's msDS-KeyCredentialLink attribute can add their own public key material, creating what's known as "shadow credentials." This allows the attacker to subsequently authenticate as that user without needing their password, by using the corresponding private key they control. Certipy's shadow auto command can be used to exploit this if the necessary permissions are available. While distinct from AD CS certificate abuse, it's another form of key-based authentication bypass/persistence.
+
+```bash
+certipy-ad shadow auto -u 'p.agila@fluffy.htb' -p 'prometheusx-303'  -account 'WINRM_SVC'  -dc-ip '10.10.11.69'
+[-] Got error while trying to request TGT: Kerberos SessionError: KRB_AP_ERR_SKEW(Clock skew too great)
+```
+
+This is because the clock is not synchronized between the attacking machine and the target. We need to sync the clock with the target machine:
+
+Execute the following as root:
+
+```bash
+timedatectl set-ntp off
+rdate -n [IP of Target]
+```
+
+This will stop NTP and sync the date and time with the IP provided.
+
+After doing this, the shadow credential attack is successful and we retrieve the NT hash for `winrm_svc`
+
