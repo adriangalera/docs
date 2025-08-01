@@ -1,5 +1,5 @@
 ---
-slug: /write-up/htb/easy/codify
+slug: /write-up/htb/machines/easy/codify
 pagination_next: null
 pagination_prev: null
 ---

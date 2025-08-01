@@ -1,5 +1,5 @@
 ---
-slug: /write-up/htb/easy/sau
+slug: /write-up/htb/machines/easy/sau
 pagination_next: null
 pagination_prev: null
 ---

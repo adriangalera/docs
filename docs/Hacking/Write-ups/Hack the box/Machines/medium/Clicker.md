@@ -1,5 +1,5 @@
 ---
-slug: /write-up/htb/medium/clicker
+slug: /write-up/htb/machines/medium/clicker
 pagination_next: null
 pagination_prev: null
 ---

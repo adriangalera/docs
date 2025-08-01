@@ -1,5 +1,5 @@
 ---
-slug: /write-up/htb/medium/manager
+slug: /write-up/htb/machines/medium/manager
 pagination_next: null
 pagination_prev: null
 ---

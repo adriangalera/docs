@@ -1,5 +1,5 @@
 ---
-slug: /write-up/htb/easy/keeper
+slug: /write-up/htb/machines/easy/keeper
 pagination_next: null
 pagination_prev: null
 ---

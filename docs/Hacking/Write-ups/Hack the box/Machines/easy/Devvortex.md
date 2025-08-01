@@ -1,5 +1,5 @@
 ---
-slug: /write-up/htb/easy/devvortex
+slug: /write-up/htb/machines/easy/devvortex
 pagination_next: null
 pagination_prev: null
 ---

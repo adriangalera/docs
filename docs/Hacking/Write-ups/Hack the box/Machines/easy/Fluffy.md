@@ -1,5 +1,5 @@
 ---
-slug: /write-up/htb/easy/fluffy
+slug: /write-up/htb/machines/easy/fluffy
 pagination_next: null
 pagination_prev: null
 draft: true

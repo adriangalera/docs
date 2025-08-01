@@ -1,5 +1,5 @@
 ---
-slug: /write-up/htb/easy/analytics
+slug: /write-up/htb/machines/easy/analytics
 pagination_next: null
 pagination_prev: null
 ---

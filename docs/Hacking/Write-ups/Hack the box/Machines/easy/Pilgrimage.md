@@ -1,5 +1,5 @@
 ---
-slug: /write-up/htb/easy/pilgrimage
+slug: /write-up/htb/machines/easy/pilgrimage
 pagination_next: null
 pagination_prev: null
 ---

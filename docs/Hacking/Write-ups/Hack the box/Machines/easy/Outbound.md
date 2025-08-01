@@ -1,5 +1,5 @@
 ---
-slug: /write-up/htb/easy/outbound
+slug: /write-up/htb/machines/easy/outbound
 pagination_next: null
 pagination_prev: null
 draft: true

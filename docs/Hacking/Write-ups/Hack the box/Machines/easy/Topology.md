@@ -1,5 +1,5 @@
 ---
-slug: /write-up/htb/easy/topology
+slug: /write-up/htb/machines/easy/topology
 pagination_next: null
 pagination_prev: null
 ---

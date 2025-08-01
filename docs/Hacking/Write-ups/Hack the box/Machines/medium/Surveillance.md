@@ -1,5 +1,5 @@
 ---
-slug: /write-up/htb/medium/surveillance
+slug: /write-up/htb/machines/medium/surveillance
 pagination_next: null
 pagination_prev: null
 ---
