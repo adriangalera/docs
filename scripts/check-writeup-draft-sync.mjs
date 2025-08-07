@@ -38,7 +38,7 @@ async function isMachineRetired(machineName) {
     return true
   } catch (err) {
     // If the machine is not found, assume it's retired
-    console.log(`Cannot check machine status for ${machineName}. Error: ${err}`)
+    console.log(`Cannot check machine status for ${machineName}. Error: ${err} on url ${baseUrl}`)
     return true
   }
 }
