@@ -8,7 +8,7 @@ pagination_prev: null
 
 https://app.hackthebox.com/challenges/Like%2520a%2520Glove
 
-Words carry semantic information. Similar to how people can infer meaning based on a word's context, AI can derive representations for words based on their context too! However, the kinds of meaning that a model uses may not match ours. We've found a pair of AIs speaking in metaphors that we can't make any sense of! The embedding model is glove-twitter-25. Note that the flag should be fully ASCII ans starts with 'htb{'.
+Words carry semantic information. Similar to how people can infer meaning based on a word's context, AI can derive representations for words based on their context too! However, the kinds of meaning that a model uses may not match ours. We've found a pair of AIs speaking in metaphors that we can't make any sense of! The embedding model is glove-twitter-25. Note that the flag should be fully ASCII ans starts with 'htb\{'.
 
 GloVe is an unsupervised learning algorithm for obtaining vector representations for words: https://nlp.stanford.edu/projects/glove/.
 
