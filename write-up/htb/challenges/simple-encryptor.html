@@ -7,8 +7,8 @@
 <link rel="preconnect" href="https://www.googletagmanager.com">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-S8VGYBN25C"></script>
 <script>function gtag(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],gtag("js",new Date),gtag("config","G-S8VGYBN25C",{anonymize_ip:!0})</script><link rel="stylesheet" href="/docs/assets/css/styles.f96ca0f1.css">
-<script src="/docs/assets/js/runtime~main.f3acb557.js" defer="defer"></script>
-<script src="/docs/assets/js/main.6215738a.js" defer="defer"></script>
+<script src="/docs/assets/js/runtime~main.81370d4b.js" defer="defer"></script>
+<script src="/docs/assets/js/main.b5d376ec.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
 <svg xmlns="http://www.w3.org/2000/svg" style="display: none;"><defs>
@@ -18,7 +18,7 @@
 <p><a href="https://app.hackthebox.com/challenges/Simple%2520Encryptor" target="_blank" rel="noopener noreferrer">https://app.hackthebox.com/challenges/Simple%2520Encryptor</a></p>
 <p>On our regular checkups of our secret flag storage server we found out that we were hit by ransomware! The original flag data is nowhere to be found, but luckily we not only have the encrypted file but also the encryption program itself.</p>
 <p>We are given a binary file called <code>encrypt</code> and the file <code>flag.enc</code></p>
-<p>We need to reverse the binary, the main function expects the file <code>flag</code> to be present. If so, it encrypts the contents and generates the file <code>flag.enc</code>.</p>
+<p>We need to reverse the binary, the main function expects the file <code>flag</code> to be present, if it is it encrypts it with the algorithm and generate the <code>flag.enc</code> file.</p>
 <p>The first 4 bytes in the file and the 32-bit truncated system-time used for the encryption
 The next content in the content of <code>flag</code> file shifted somehow:</p>
 <div class="language-shell codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-shell codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">-rw-rw-r-- 1 gal gal    11 Aug 16 15:10 flag</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">-rw-rw-r-- 1 gal gal    15 Aug 16 15:10 flag.enc</span><br></span></code></pre></div></div>
@@ -27,8 +27,10 @@ The next content in the content of <code>flag</code> file shifted somehow:</p>
 <ol>
 <li>Computes a random integer, take the lowest 8 bits and do XOR with the byte at position i</li>
 <li>Computes another random integer restricted from 0 to 7.</li>
-<li>Perform left bitwise shift by the number determined by the random number, perform the right bitwise shit by (8-random number) and finally perform the bitwise OR of the two shifted values</li>
+<li>Perform left bitwise shift by the number determined by the random number. This is not standard bitwise shirt, in the standard operation the excess bit are lost, however here there are pushed through the start of the binaries. In order to so, first perform the standard bit shift and then perform the right bitwise shit of the excess bits (8-random number) and finally perform the bitwise OR of the two shifted values.</li>
 </ol>
+<p>It&#x27;s easy to visualize in an example:</p>
+<p><img decoding="async" loading="lazy" alt="Bit shifting" src="/docs/assets/images/5839308231812435068-71d6c87bea4bce9326e556478648c03d.jpg" width="1280" height="863" class="img_ev3q"></p>
 <p>In order to revert the encryption, first we need to be able to generate exactly the same sequence of random number. Since computers use pseudo-random number generators (<code>PRNG</code>) and we have the seed, we can generate exactly the same sequence of random number. But, there&#x27;s one caveat: <code>python</code> and <code>c</code> uses different <code>PRNG</code> implementations.</p>
 <p>Having said that, the first starting point is trying to write our own encryption program in python and make sure another file is generated with exactly the same content:</p>
 <div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">└─$ python reencrypt.py # generates flag.reenc from python implementation</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">└─$ md5sum flag.enc flag.reenc </span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">4c5c95630c496b16c9977521647d5d6a  flag.enc</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">4c5c95630c496b16c9977521647d5d6a  flag.reenc</span><br></span></code></pre></div></div>
@@ -37,7 +39,7 @@ The next content in the content of <code>flag</code> file shifted somehow:</p>
 <ol>
 <li>Request the random number for the XOR</li>
 <li>Request the random number for the bit shifting</li>
-<li>Revert the bit shifting: what was shifted left, now is shifter right and vice versa</li>
+<li>Revert the bit shifting: what was shifted left, now is shifted right and vice versa</li>
 <li>Revert the XOR</li>
 </ol>
 <p>And voilà, you will get the flag!</p></div></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="Docs pages"></nav></div></div></div></div></main></div></div></div></div>
