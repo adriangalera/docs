@@ -40,9 +40,7 @@ This might be useful for later.
 
 In the website we see: `Please login or register to start uploading and viewing your files.`
 
-When you upload a file, you can see the URL is:
-
-`http://nocturnal.htb/view.php?username=test%40test.htb&file=test.pdf`
+When you upload a file, you can see the URL is http://nocturnal.htb/view.php?username=test%40test.htb&file=test.pdf
 
 We can try to abuse this to list files.
 
@@ -50,7 +48,7 @@ We can try to abuse this to list files.
 
 If you register two users and upload different files, and you try to access same file from both accounts, you will discover that, i you send a valid username but invalid file, you'll get a list of the files uploaded for that username, e.g:
 
-`http://nocturnal.htb/view.php?username=test@test.htb&file=test2.pdf`
+http://nocturnal.htb/view.php?username=test@test.htb&file=test2.pdf
 
 So, we need a way of enumerating users. We can enumerate users with `fuff` and `SecLists`:
 
@@ -201,7 +199,7 @@ Come across some vulnerabilities:
 
 - https://github.com/ajdumanhug/CVE-2023-46818
 
-It will exploit versions of ISPConfig <= 3.2.11 and we've got ISPConfig Version: 3.2.10p1
+It will exploit versions of ISPConfig `<= 3.2.11` and we've got ISPConfig Version: 3.2.10p1
 
 We are lucky, looks like it will be affected
 
