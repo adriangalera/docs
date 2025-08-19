@@ -23,7 +23,7 @@ You can find mmore methods to improve the shell here https://blog.ropnop.com/upg
 ## No python available
 
 ```bash
-script /dev/null -c bash
+script -q /dev/null -c bash
 ```
 
 or
