@@ -65,3 +65,12 @@ If you identify a parameter, you can also fuzz the values:
 ```bash
 ffuf -w /tmp/ids.txt:FUZZ -u http://admin.academy.htb:30373/admin/admin.php -X POST -d 'id=FUZZ' -H 'Content-Type: application/x-www-form-urlencoded'  -fs 768
 ```
+
+If the parameter is a username, you can try to enumerate the users with `SecList` names.txt:
+
+```bash
+ ffuf -w /opt/github/SecLists/Usernames/Names/names.txt:FUFF -u "http://nocturnal.htb/view.php?username=FUFF&file=test.pdf" -H "Cookie: PHPSESSID=xxx" -fw 1170
+```
+
+In this case, the brute-force was only available for authenticated users. Luckily, we can pass cookies to fuff. It's a bit confusing as you need to set the `-H` flag, the same as a header, but prefix it with `Cookie: `. 
+
