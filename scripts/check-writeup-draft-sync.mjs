@@ -2,7 +2,7 @@ import axios from "axios";
 import * as glob from "glob"
 import fs from "node:fs"
 
-const WRITE_UP_PATH = "docs/Hacking/Write-ups/Hack\\ the\\ box/Machines/*"
+const WRITE_UP_PATH = "docs/Hacking/Write-ups/Hack\\ the\\ box/Machines/*/*"
 const FgRed = "\x1b[31m"
 const FgGreen = "\x1b[32m"
 
