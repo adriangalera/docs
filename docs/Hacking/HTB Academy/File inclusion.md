@@ -1,4 +1,4 @@
-## File inclusion
+# File inclusion
 
 To reduce the amount of code required, sometimes the page or section to render is passed with a parameter. If this feature is not properly secured an attacker can use this parameter to display the content of any file.
 
