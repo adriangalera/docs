@@ -517,3 +517,81 @@ In this example:
 | **21**                                    | **Subauthority1**        | A variable number identifying the user's relation or group to the authority that created the SID. Indicates the order in which the account was created. |
 | **674899381-4069889467-2080702030**       | **Subauthority2**        | Identifies which computer or domain created the number. |
 | **1002**                                  | **Subauthority3**        | The RID (Relative Identifier) that distinguishes one account from another. Indicates whether the user is a normal user, guest, administrator, or part of another group. |
+
+
+### Security Accounts Manager (SAM) and Access Control Entries (ACE)
+
+SAM grants rights to a network to execute specific processes.
+
+The access rights themselves are managed by Access Control Entries (ACE) in Access Control Lists (ACL). The ACLs contain ACEs that define which users, groups, or processes have access to a file or to execute a process, for example.
+
+The permissions to access a securable object are given by the security descriptor, classified into two types of ACLs: the Discretionary Access Control List (DACL) or System Access Control List (SACL). Every thread and process started or initiated by a user goes through an authorization process. An integral part of this process is access tokens, validated by the Local Security Authority (LSA). In addition to the SID, these access tokens contain other security-relevant information. Understanding these functionalities is an essential part of learning how to use and work around these security mechanisms during the privilege escalation phase.
+
+### User Account Control (UAC)
+
+User Account Control (UAC) is a security feature in Windows to prevent malware from running or manipulating processes that could damage the computer or its contents.
+
+There is the Admin Approval Mode in UAC, which is designed to prevent unwanted software from being installed without the administrator's knowledge or to prevent system-wide changes from being made.
+
+This is the typical display that ask for consent to install a software on Windows because the install process requires Admin privileges.
+
+You can find how the UAC works here: https://docs.microsoft.com/en-us/windows/security/identity-protection/user-account-control/how-user-account-control-works
+
+### Registry
+
+The Registry is a hierarchical database in Windows critical for the operating system. It stores low-level settings for the Windows operating system and applications that choose to use it. To see, you just need to execute `regedit` command. It has a tree structure.
+
+Each folder under Computer is a key. The root keys all start with HKEY. A key such as HKEY-LOCAL-MACHINE is abbreviated to HKLM.
+
+The following keys:
+
+- HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run
+- HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run
+- HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunOnce
+- HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunOnce
+
+are useful for maintaining access to the system. For example:
+
+```ps1
+PS C:\htb> reg query HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run
+
+HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run
+    OneDrive    REG_SZ    "C:\Users\bob\AppData\Local\Microsoft\OneDrive\OneDrive.exe" /background
+    OPENVPN-GUI    REG_SZ    C:\Program Files\OpenVPN\bin\openvpn-gui.exe
+    Docker Desktop    REG_SZ    C:\Program Files\Docker\Docker\Docker Desktop.exe
+```
+
+Shows the current applications ran by the user.
+
+### AppLocker: Application Whitelist
+
+An application whitelist is a list of approved software applications or executables allowed to be present and run on a system.
+
+Applocker is the Windows whitelist mechanism. AppLocker gives system administrators control over which applications and files users can run. It gives granular control over executables, scripts, Windows installer files, DLLs, packaged apps, and packed app installers.
+
+### Local Group Policy
+
+Group Policy allows administrators to set, configure, and adjust a variety of settings. In a domain environment, group policies are pushed down from a Domain Controller onto all domain-joined machines that Group Policy objects (GPOs) are linked to. These settings can also be defined on individual machines using Local Group Policy.
+
+Local Group Policy can be used to tweak certain graphical and network settings that are otherwise not accessible via the Control Panel. It can also be used to lock down an individual computer policy with stringent security settings, such as only allowing certain programs to be installed/run or enforcing strict user account password requirements.
+
+The editor can be opened with `gpedit.msc` command.
+
+### Windows Defender Antivirus
+
+Modern windows comes with Windows Defender Antivirus enabled by default.
+
+We can use the PowerShell cmdlet `Get-MpComputerStatus` to check which protection settings are enabled:
+
+```ps1
+PS C:\htb> Get-MpComputerStatus | findstr "True"
+AMServiceEnabled                : True
+AntispywareEnabled              : True
+AntivirusEnabled                : True
+BehaviorMonitorEnabled          : True
+IoavProtectionEnabled           : True
+IsTamperProtected               : True
+NISEnabled                      : True
+OnAccessProtectionEnabled       : True
+RealTimeProtectionEnabled       : True
+```
