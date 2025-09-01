@@ -24,7 +24,7 @@ While in Windows, we'll use the builtin Remote Desktop Connection (mstsc.exe). F
 
 ## OS Structure
 
-In Windows operating systems, the root directory is <drive_letter>:\ (commonly C drive). The root directory (also known as the boot partition) is where the operating system is installed. Other physical and virtual drives are assigned other letters, for example, Data (E:). The directory structure of the boot partition is as follows:
+In Windows operating systems, the root directory is `<drive_letter>:\` (commonly C drive). The root directory (also known as the boot partition) is where the operating system is installed. Other physical and virtual drives are assigned other letters, for example, Data (E:). The directory structure of the boot partition is as follows:
 
 | **Folder**              | **Description** |
 |-------------------------|-----------------|
@@ -35,7 +35,7 @@ In Windows operating systems, the root directory is <drive_letter>:\ (commonly C
 | **Users**               | Contains user profiles for each user who logs onto the system. Includes the **Public** and **Default** folders. |
 | **Default**             | Default user profile template used when a new user is created. The new profile is based on this template. |
 | **Public**              | Used to share files among all users. Accessible by all users and shared over the network by default (requires a valid network account). |
-| **AppData**             | Hidden per-user application data folder (e.g., `cliff.moore\AppData`) containing: <br> - **Roaming**: Machine-independent data (e.g., custom dictionaries).<br> - **Local**: Machine-specific data, not synchronized.<br> - **LocalLow**: Lower integrity level, used by apps in safe mode (e.g., browsers). |
+| **AppData**             | Hidden per-user application data folder (e.g., `cliff.moore\AppData`) containing: <br/> - **Roaming**: Machine-independent data (e.g., custom dictionaries).<br/> - **Local**: Machine-specific data, not synchronized.<br/> - **LocalLow**: Lower integrity level, used by apps in safe mode (e.g., browsers). |
 | **Windows**             | Contains most files required for the Windows operating system. |
 | **System, System32, SysWOW64** | Contains essential DLLs for Windows and the Windows API. These folders are searched when programs load DLLs without an absolute path. |
 | **WinSxS**              | The Windows Component Store. Contains copies of all Windows components, updates, and service packs. |
