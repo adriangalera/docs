@@ -136,7 +136,7 @@ A group is considered a container object because it can contain other objects, i
 
 In Active Directory, we commonly see what are called "nested groups" (a group added as a member of another group), which can lead to a user(s) obtaining unintended rights. Nested group membership is something we see and often leverage during penetration tests. The tool BloodHound helps to discover attack paths within a network and illustrate them in a graphical interface.
 
-## Organizational Units (OUs)
+### Organizational Units (OUs)
 
 An organizational unit, or OU from here on out, is a container that systems administrators can use to store similar objects for ease of administration.
 
@@ -144,22 +144,94 @@ For example, we may have a top-level OU called Employees and then child OUs unde
 
 For example, we may want to set a specific password policy for privileged service accounts so these accounts could be placed in a particular OU and then have a Group Policy object assigned to it, which would enforce this password policy on all accounts placed inside of it.
 
-## Domain
+### Domain
 
 A domain is the structure of an AD network. Domains contain objects such as users and computers, which are organized into container objects: groups and OUs. Every domain has its own separate database and sets of policies that can be applied to any and all objects within the domain.
 
-## Domain Controllers
+### Domain Controllers
 
 Domain Controllers are essentially the brains of an AD network. They handle authentication requests, verify users on the network, and control who can access the various resources in the domain. All access requests are validated via the domain controller and privileged access requests are based on predetermined roles assigned to users. It also enforces security policies and stores information about every other object in the domain.
 
-## Sites
+### Sites
 
 A site in AD is a set of computers across one or more subnets connected using high-speed links. They are used to make replication across domain controllers run efficiently.
 
-## Built-in
+### Built-in
 
 In AD, built-in is a container that holds default groups in an AD domain. They are predefined when an AD domain is created.
 
-## Foreign Security Principals
+### Foreign Security Principals
 
 A foreign security principal (FSP) is an object created in AD to represent a security principal that belongs to a trusted external forest.
+
+## Active Directory Functionality
+
+There are five Flexible Single Master Operation (FSMO) roles. These roles can be defined as follows:
+
+| Roles                  | Description |
+|------------------------|-------------|
+| **Schema Master**      | This role manages the read/write copy of the AD schema, which defines all attributes that can apply to an object in AD. |
+| **Domain Naming Master** | Manages domain names and ensures that two domains of the same name are not created in the same forest. |
+| **Relative ID (RID) Master** | The RID Master assigns blocks of RIDs to other DCs within the domain that can be used for new objects. The RID Master helps ensure that multiple objects are not assigned the same SID. Domain object SIDs are the domain SID combined with the RID number assigned to the object to make the unique SID. |
+| **PDC Emulator**       | The host with this role would be the authoritative DC in the domain and respond to authentication requests, password changes, and manage Group Policy Objects (GPOs). The PDC Emulator also maintains time within the domain. |
+| **Infrastructure Master** | This role translates GUIDs, SIDs, and DNs between domains. This role is used in organizations with multiple domains in a single forest. The Infrastructure Master helps them to communicate. If this role is not functioning properly, Access Control Lists (ACLs) will show SIDs instead of fully resolved names. |
+
+Depending on the organization, these roles may be assigned to specific DCs or as defaults each time a new DC is added.
+
+### Trust
+
+A trust is used to establish forest-forest or domain-domain authentication, allowing users to access resources in (or administer) another domain outside of the domain their account resides in. A trust creates a link between the authentication systems of two domains.
+
+There are several trust types.
+
+
+| Trust Type      | Description |
+|-----------------|-------------|
+| **Parent-child** | Domains within the same forest. The child domain has a two-way transitive trust with the parent domain. |
+| **Cross-link**   | A trust between child domains to speed up authentication. |
+| **External**     | A non-transitive trust between two separate domains in separate forests which are not already joined by a forest trust. This type of trust utilizes SID filtering. |
+| **Tree-root**    | A two-way transitive trust between a forest root domain and a new tree root domain. They are created by design when you set up a new tree root domain within a forest. |
+| **Forest**       | A transitive trust between two forest root domains. |
+
+Trusts can be transitive or non-transitive.
+
+- A transitive trust means that trust is extended to objects that the child domain trusts.
+- In a non-transitive trust, only the child domain itself is trusted.
+
+Trusts can be set up to be one-way or two-way (bidirectional).
+
+- In bidirectional trusts, users from both trusting domains can access resources.
+- In a one-way trust, only users in a trusted domain can access resources in a trusting domain, not vice-versa. The direction of trust is opposite to the direction of access.
+
+Often, domain trusts are set up improperly and provide unintended attack paths. 
+
+Also, trusts set up for ease of use may not be reviewed later for potential security implications. 
+
+Mergers and acquisitions can result in bidirectional trusts with acquired companies, unknowingly introducing risk into the acquiring company’s environment. 
+
+t is not uncommon to be able to perform an attack such as Kerberoasting against a domain outside the principal domain and obtain a user that has administrative access within the principal domain.
+
+## Active Directory Protocols
+
+### Kerberos
+
+Kerberos is a stateless authentication protocol based on tickets instead of transmitting user passwords over the network. As part of Active Directory Domain Services (AD DS), Domain Controllers have a Kerberos Key Distribution Center (KDC) that issues tickets.
+
+When a user initiates a login request to a system, they request a ticket from the KDC, encrypting the request with the user's password. If the KDC can decrypt the request (AS-REQ) using their password, it will create a Ticket Granting Ticket (TGT) and transmit it to the user.
+
+The user then presents its TGT to a Domain Controller to request a Ticket Granting Service (TGS) ticket, encrypted with the associated service's NTLM password hash.
+
+Finally, the client requests access to the required service by presenting the TGS to the application or service, which decrypts it with its password hash. If the entire process completes appropriately, the user will be permitted to access the requested service or application.
+
+The password is never transmitted over the network.
+
+The Kerberos Key Distribution Centre (KDC) does not record previous transactions (it is stateless). Instead, the Kerberos Ticket Granting Service ticket (TGS) relies on a valid Ticket Granting Ticket (TGT). It assumes that if the user has a valid TGT, they must have proven their identity.
+
+More in depth:
+1) `KRB_AS_REQ`: The user sends a timestamp encrypted with their password to the KDC. This is the request to the TGT (Ticket Granting Ticket).
+2) `KRB_AS_REP`: The KDC verifies the user information and generates and encrypts the TGT message with its private key (the secret key of the krbtgt account). Then, the TGT message is passed to the user.
+3) `KRB_TGS_REQ`: The user presents the TGT to the DC and request a Ticket Granting Service (TGS) to access certain service
+4) `KRB_TGS_REP`: The TGS is encrypted with the hash NTLM password of the service or computer account that is running the KDC.
+5) `KRB_AP_REQ`: The user presents the TGS to the service.
+
+The Kerberos protocol uses port 88 (both TCP and UDP). When enumerating an Active Directory environment, we can often locate Domain Controllers by performing port scans looking for open port 88 using a tool such as Nmap.
