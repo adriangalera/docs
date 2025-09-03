@@ -321,3 +321,37 @@ Two valid endpoints are discovered:
 - /docs: This is the documented Swagger UI endpoint.
 
 The 405 Method Not Allowed response for /items suggests that an incorrect HTTP method was used to access this endpoint (e.g., trying a GET request instead of a POST).
+
+## Skills assessment
+
+We're just given the server address and the `common` wordlist. Our task is to find the flag.
+
+```bash
+ffuf -ic -c -u http://94.237.59.213:37986/FUZZ -w /opt/github/SecLists/Discovery/Web-Content/common.txt:FUZZ -recursion -recursion-depth 2
+```
+
+We discover `admin/index.php` which we might fuzz parameters there.
+
+```bash
+ffuf -ic -c -u http://94.237.59.213:37986/admin/FUZZ -w /opt/github/SecLists/Discovery/Web-Content/common.txt -e ".php" -mc 200
+```
+
+We discover `admin/panel.php` which asks for a parameter named `accessID`. Let's fuzz the correct value:
+
+```bash
+ffuf -ic -c -u "http://94.237.59.213:37986/admin/panel.php?accessID=FUZZ" -w /opt/github/SecLists/Discovery/Web-Content/common.txt -fs 58
+```
+
+Once the value is found, we go to the page and it tells to do vhost fuzzing of the specified domain. We can do that with gobuster:
+
+```bash
+└─$ gobuster vhost -u http://fuzzing_fun.htb:37986 -w /opt/github/SecLists/Discovery/Web-Content/common.txt --append-domain -xs 400,403
+```
+
+We discover a hidden subdomain, a the page suggest us to do recursive fuzzing:
+
+```bash
+ffuf -ic -c -u http://hidden.fuzzing_fun.htb:37986/godeep/FUZZ -w /opt/github/SecLists/Discovery/Web-Content/common.txt:FUZZ -recursion -recursion-depth 4
+```
+
+And we discover the flag in the last found page.
