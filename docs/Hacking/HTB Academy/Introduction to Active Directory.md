@@ -235,3 +235,272 @@ More in depth:
 5) `KRB_AP_REQ`: The user presents the TGS to the service.
 
 The Kerberos protocol uses port 88 (both TCP and UDP). When enumerating an Active Directory environment, we can often locate Domain Controllers by performing port scans looking for open port 88 using a tool such as Nmap.
+
+### DNS
+
+DNS is used to resolve hostnames to IP addresses. Private internal networks use Active Directory DNS namespaces to facilitate communications between servers, clients, and peers. DNS are managed by the Domain Controllers.
+
+We can perform `nslookup` and we'll get all the IPs of Domain Controller in the network:
+```ps1
+PS C:\htb> nslookup INLANEFREIGHT.LOCAL
+
+Server:  172.16.6.5
+Address:  172.16.6.5
+
+Name:    INLANEFREIGHT.LOCAL
+Address:  172.16.6.5
+```
+This is called forward DNS lookup, we can do the opposite, reverse DNS lookup: from IP, get the hostname:
+
+```ps1
+PS C:\htb> nslookup 172.16.6.5
+
+Server:  172.16.6.5
+Address:  172.16.6.5
+
+Name:    ACADEMY-EA-DC01.INLANEFREIGHT.LOCAL
+Address:  172.16.6.5
+```
+
+We can know the IP of certain host:
+```ps1
+PS C:\htb> nslookup ACADEMY-EA-DC01
+
+Server:   172.16.6.5
+Address:  172.16.6.5
+
+Name:    ACADEMY-EA-DC01.INLANEFREIGHT.LOCAL
+Address:  172.16.6.5
+```
+
+### LDAP
+
+Active Directory supports Lightweight Directory Access Protocol (LDAP) for directory lookups. LDAP is an open-source and cross-platform protocol used for authentication against various directory services (such as AD).
+
+AD stores user account information and security information such as passwords and facilitates sharing this information with other devices on the network. LDAP is the language that applications use to communicate with other servers that provide directory services. In other words, LDAP is how systems in the network environment can "speak" to AD.
+
+An LDAP session begins by first connecting to an LDAP server, also known as a Directory System Agent. The Domain Controller in AD actively listens for LDAP requests, such as security authentication requests.
+
+The relationship between AD and LDAP can be compared to Apache and HTTP. The same way Apache is a web server that uses the HTTP protocol, Active Directory is a directory server that uses the LDAP protocol.
+
+There are two types of LDAP authentication:
+
+- Simple Authentication: This includes anonymous authentication, unauthenticated authentication, and username/password authentication. Simple authentication means that a username and password create a BIND request to authenticate to the LDAP server.
+
+- SASL Authentication: The Simple Authentication and Security Layer (SASL) framework uses other authentication services, such as Kerberos, to bind to the LDAP server and then uses this authentication service (Kerberos in this example) to authenticate to LDAP.
+
+LDAP authentication messages are sent in cleartext by default so anyone can sniff out LDAP messages on the internal network. It is recommended to use TLS encryption or similar to safeguard this information in transit.
+
+### MSRPC
+
+ MSRPC is Microsoft's implementation of Remote Procedure Call (RPC), an interprocess communication technique used for client-server model-based applications. Windows systems use MSRPC to access systems in Active Directory using four key RPC interfaces.
+
+ | Protocol | Description |
+|----------|-------------|
+| **lsarpc** | A set of RPC calls to the Local Security Authority (LSA) system which manages the local security policy on a computer, controls the audit policy, and provides interactive authentication services. LSARPC is used to perform management on domain security policies. |
+| **netlogon** | Netlogon is a Windows process used to authenticate users and other services in the domain environment. It is a service that continuously runs in the background. |
+| **samr** | Remote SAM (samr) provides management functionality for the domain account database, storing information about users and groups. IT administrators use the protocol to manage users, groups, and computers by enabling admins to create, read, update, and delete information about security principles. Attackers (and pentesters) can use the samr protocol to perform reconnaissance about the internal domain using tools such as BloodHound to visually map out the AD network and create "attack paths" to illustrate visually how administrative access or full domain compromise could be achieved. Organizations can protect against this type of reconnaissance by changing a Windows registry key to only allow administrators to perform remote SAM queries since, by default, all authenticated domain users can make these queries to gather a considerable amount of information about the AD domain. |
+| **drsuapi** | drsuapi is the Microsoft API that implements the Directory Replication Service (DRS) Remote Protocol which is used to perform replication-related tasks across Domain Controllers in a multi-DC environment. Attackers can utilize drsuapi to create a copy of the Active Directory domain database (NTDS.dit) file to retrieve password hashes for all accounts in the domain, which can then be used to perform Pass-the-Hash attacks to access more systems or cracked offline using a tool such as Hashcat to obtain the cleartext password to log in to systems using remote management protocols such as Remote Desktop (RDP) and WinRM. |
+
+### NTLM
+
+Aside from Kerberos and LDAP, Active Directory uses several other authentication methods which can be used (and abused) by applications and services in AD. These include LM, NTLM, NTLMv1, and NTLMv2. 
+
+#### LM
+
+LAN Manager (LM or LANMAN) hashes are the oldest password storage mechanism used by the Windows operating system. If in use, they are stored in the SAM database on a Windows host and the NTDS.DIT database on a Domain Controller. 
+
+Due to significant security weaknesses in the hashing algorithm used for LM hashes, it has been turned off by default since Windows Vista/Server 2008. 
+
+Passwords using LM are limited to a maximum of 14 characters. Passwords are not case sensitive and are converted to uppercase before generating the hashed value, limiting the keyspace to a total of 69 characters making it relatively easy to crack these hashes using a tool such as Hashcat.
+
+An LM hash takes the form of 299bd128c1101fd6.
+
+#### NTHash (NTLM)
+
+NT LAN Manager (NTLM) hashes are used on modern Windows systems. It is a challenge-response authentication protocol and uses three messages to authenticate: a client first sends a `NEGOTIATE_MESSAGE` to the server, whose response is a `CHALLENGE_MESSAGE` to verify the client's identity. Lastly, the client responds with an `AUTHENTICATE_MESSAGE`. These hashes are stored locally in the SAM database or the NTDS.DIT database file on a Domain Controller. 
+
+ NTLM is also vulnerable to the pass-the-hash attack, which means an attacker can use just the NTLM hash (after obtaining via another successful attack) to authenticate to target systems where the user is a local admin without needing to know the cleartext value of the password.
+
+ An NT hash takes the form of b4b9b02e6f09a9bd760f388b67351e2b, which is the second half of the full NTLM hash. An NTLM hash looks like this: `Rachel:500:aad3c435b514a4eeaad3b935b51304fe:e46b9e548fa0d122de7f59fb6d48eaa2:::`
+
+ - Rachel is the username
+ - 500 is the Relative Identifier (RID). 500 is the known RID for the administrator account
+ - aad3c435b514a4eeaad3b935b51304fe is the LM hash and, if LM hashes are disabled on the system, can not be used for anything
+ - e46b9e548fa0d122de7f59fb6d48eaa2 is the NT hash. This hash can either be cracked offline to reveal the cleartext value (depending on the length/strength of the password) or used for a pass-the-hash attack.
+
+#### NTLMv1
+
+The protocol is used for network authentication, and the Net-NTLMv1 hash itself is created from a challenge/response algorithm. NTLMv1 uses both the NT and the LM hash, which can make it easier to "crack" offline after capturing a hash
+
+#### NTLMv2
+
+Stronger alternative to NTLMv1. It is hardened against certain spoofing attacks that NTLMv1 is susceptible to.
+
+#### Domain Cached Credentials (MSCache2)
+
+In an AD environment, the authentication methods mentioned in this section and the previous require the host we are trying to access to communicate with the "brains" of the network, the Domain Controller.
+
+Microsoft developed the MS Cache v1 and v2 algorithm also known as Domain Cached Credentials (DCC) to solve the potential issue of a domain-joined host being unable to communicate with a domain controller.
+
+Hosts save the last ten hashes for any domain users that successfully log into the machine in the HKEY_LOCAL_MACHINE\SECURITY\Cache registry key. 
+
+These hashes cannot be used in pass-the-hash attacks. Furthermore, the hash is very slow to crack with a tool such as Hashcat.
+
+## Users and Machine accounts
+
+User accounts are created on both local systems (not joined to AD) and in Active Directory to give a person or a program (such as a system service) the ability to log on to a computer and access resources based on their rights.
+
+When a user logs in, the system verifies their password and creates an access token. This token describes the security content of a process or thread and includes the user's security identity and group membership. Whenever a user interacts with a process, this token is presented.
+
+Users can be assigned to groups that can contain one or more members. These groups can also be used to control access to resources.
+
+Some users may have two or more accounts provisioned based on their job role (i.e., an IT admin or Help Desk member). Aside from standard user and admin accounts tied back to a specific user, we will often see many service accounts used to run a particular application or service in the background or perform other vital functions within the domain environment. 
+
+User accounts can be provisioned many rights in Active Directory: from very basic read-only user to Enterprise Admin and all the combinations in the middle. Because users can have so many rights assigned to them, they can also be misconfigured relatively easily and granted unintended rights that an attacker or a penetration tester can leverage.
+
+### Local accounts
+
+Local accounts are stored locally on a particular server or workstation. These accounts can be assigned rights on that host either individually or via group membership. Any rights assigned can only be granted to that specific host and will not work across the domain. There are some default local user accounts:
+
+- Administrator: this account has the SID S-1-5-domain-500. Has full control of the system. It cannot be deleted or locked, but it can be disabled or renamed.
+
+- Guest: this account is disabled by default. The purpose of this account is to allow users without an account on the computer to log in temporarily with limited access rights. By default, it has a blank password and is generally recommended to be left disabled because of the security risk of allowing anonymous access to a host.
+
+- SYSTEM: NT AUTHORITY\SYSTEM account. Default account installed and used by the operating system to perform many of its internal functions. SYSTEM is a service account and does not run entirely in the same context as a regular user.  A SYSTEM account is the highest permission level one can achieve on a Windows host and, by default, is granted Full Control permissions to all files on a Windows system.
+
+- Network Service: This is a predefined local account used by the Service Control Manager (SCM) for running Windows services. When a service runs in the context of this particular account, it will present credentials to remote services.
+
+- Local Service: This is another predefined local account used by the Service Control Manager (SCM) for running Windows services. It is configured with minimal privileges on the computer and presents anonymous credentials to the network.
+
+### Domain users
+
+They are granted rights from the domain to access resources such as file servers, printers, intranet hosts, and other objects based on the permissions granted to their user account or the group that account is a member of. Domain user accounts can log in to any host in the domain, unlike local users.
+
+One account to keep in mind is the KRBTGT account, this is a type of local account built into the AD infrastructure. It acts as a service account for the Key Distribution service providing authentication and access for domain resources. This account is a common target of many attackers since gaining control or access will enable an attacker to have unconstrained access to the domain.
+
+### Domain-joined vs. Non-Domain-joined Machines
+
+- Domain joined: Hosts joined to a domain have greater ease of information sharing within the enterprise and a central management point (the DC) to gather resources, policies, and updates from. A host joined to a domain will acquire any configurations or changes necessary through the domain's Group Policy.
+
+- Non-domain joined: Non-domain joined computers or computers in a workgroup are not managed by domain policy. The individual users are in charge of any changes they wish to make to their host.
+
+It is important to note that a machine account (NT AUTHORITY\SYSTEM level access) in an AD environment will have most of the same rights as a standard domain user account. Access in the context of the SYSTEM account will allow us read access to much of the data within the domain.
+
+## AD Groups
+
+After users, groups are another significant object in Active Directory. They can place similar users together and mass assign rights and access. The rights that they confer on their members may not be readily apparent but may grant excessive (and even unintended) privileges that can be abused if not set up correctly.
+
+OUs are useful for grouping users, groups, and computers to ease management and deploying Group Policy settings to specific objects in the domain. Groups are primarily used to assign permissions to access resources.
+
+Groups in Active Directory have two fundamental characteristics: type and scope. The group type defines the group's purpose, while the group scope shows how the group can be used within the domain or forest. When creating a new group, we must select a group type. There are two main types: security and distribution groups.
+
+The Security groups type is primarily for ease of assigning permissions and rights to a collection of users instead of one at a time.
+
+The Distribution groups type is used by email applications such as Microsoft Exchange to distribute messages to group members
+
+There are three different group scopes that can be assigned when creating a new group.
+
+Domain Local Group: only access resources in the domain the group was created.
+
+Global Group: can access resources in another domain.
+
+Universal Group: The universal group scope can be used to manage resources distributed across multiple domains and can be given permissions to any object within the same forest.
+
+### Nested Group Membership
+
+a Domain Local Group can be a member of another Domain Local Group in the same domain. Through this membership, a user may inherit privileges not assigned directly to their account or even the group they are directly a member of, but rather the group that their group is a member of. This can sometimes lead to unintended privileges granted to a user that are difficult to uncover without an in-depth assessment of the domain. Tools such as BloodHound are particularly useful in uncovering privileges that a user may inherit through one or more nestings of groups.
+
+## Active Directory Rights and Privileges
+
+Rights are typically assigned to users or groups and deal with permissions to `access an object` such as a file, while privileges grant a user permission to `perform an action` such as run a program, shut down a system, reset passwords, etc. Privileges can be assigned individually to users or conferred upon them via built-in or custom group membership.
+
+AD contains many default or built-in security groups, some of which grant their members powerful rights and privileges which can be abused. Some of them are listed below:
+
+| Group Name | Description |
+|------------|-------------|
+| **Account Operators** | Members can create and modify most types of accounts, including those of users, local groups, and global groups, and members can log in locally to domain controllers. They cannot manage the Administrator account, administrative user accounts, or members of the Administrators, Server Operators, Account Operators, Backup Operators, or Print Operators groups. |
+| **Administrators** | Members have full and unrestricted access to a computer or an entire domain if they are in this group on a Domain Controller. |
+| **Backup Operators** | Members can back up and restore all files on a computer, regardless of the permissions set on the files. Backup Operators can also log on to and shut down the computer. Members can log onto DCs locally and should be considered Domain Admins. They can make shadow copies of the SAM/NTDS database, which, if taken, can be used to extract credentials and other juicy info. |
+| **DnsAdmins** | Members have access to network DNS information. The group will only be created if the DNS server role is or was at one time installed on a domain controller in the domain. |
+| **Domain Admins** | Members have full access to administer the domain and are members of the local administrator's group on all domain-joined machines. |
+| **Domain Computers** | Any computers created in the domain (aside from domain controllers) are added to this group. |
+| **Domain Controllers** | Contains all DCs within a domain. New DCs are added to this group automatically. |
+| **Domain Guests** | This group includes the domain's built-in Guest account. Members of this group have a domain profile created when signing onto a domain-joined computer as a local guest. |
+| **Domain Users** | This group contains all user accounts in a domain. A new user account created in the domain is automatically added to this group. |
+| **Enterprise Admins** | Membership in this group provides complete configuration access within the domain. The group only exists in the root domain of an AD forest. Members in this group are granted the ability to make forest-wide changes such as adding a child domain or creating a trust. The Administrator account for the forest root domain is the only member of this group by default. |
+| **Event Log Readers** | Members can read event logs on local computers. The group is only created when a host is promoted to a domain controller. |
+| **Group Policy Creator Owners** | Members create, edit, or delete Group Policy Objects in the domain. |
+| **Hyper-V Administrators** | Members have complete and unrestricted access to all the features in Hyper-V. If there are virtual DCs in the domain, any virtualization admins, such as members of Hyper-V Administrators, should be considered Domain Admins. |
+| **IIS_IUSRS** | This is a built-in group used by Internet Information Services (IIS), beginning with IIS 7.0. |
+| **Pre–Windows 2000 Compatible Access** | This group exists for backward compatibility for computers running Windows NT 4.0 and earlier. Membership in this group is often a leftover legacy configuration. It can lead to flaws where anyone on the network can read information from AD without requiring a valid AD username and password. |
+| **Print Operators** | Members can manage, create, share, and delete printers that are connected to domain controllers in the domain along with any printer objects in AD. Members are allowed to log on to DCs locally and may be used to load a malicious printer driver and escalate privileges within the domain. |
+| **Protected Users** | Members of this group are provided additional protections against credential theft and tactics such as Kerberos abuse. |
+| **Read-only Domain Controllers** | Contains all Read-only domain controllers in the domain. |
+| **Remote Desktop Users** | This group is used to grant users and groups permission to connect to a host via Remote Desktop (RDP). This group cannot be renamed, deleted, or moved. |
+| **Remote Management Users** | This group can be used to grant users remote access to computers via Windows Remote Management (WinRM). |
+| **Schema Admins** | Members can modify the Active Directory schema, which is the way all objects with AD are defined. This group only exists in the root domain of an AD forest. The Administrator account for the forest root domain is the only member of this group by default. |
+| **Server Operators** | This group only exists on domain controllers. Members can modify services, access SMB shares, and backup files on domain controllers. By default, this group has no members. |
+
+Below there are listed some interesting user privileges:
+
+| Privilege | Description |
+|-----------|-------------|
+| **SeRemoteInteractiveLogonRight** | This privilege could give our target user the right to log onto a host via Remote Desktop (RDP), which could potentially be used to obtain sensitive data or escalate privileges. |
+| **SeBackupPrivilege** | This grants a user the ability to create system backups and could be used to obtain copies of sensitive system files that can be used to retrieve passwords such as the SAM and SYSTEM Registry hives and the NTDS.dit Active Directory database file. |
+| **SeDebugPrivilege** | This allows a user to debug and adjust the memory of a process. With this privilege, attackers could utilize a tool such as Mimikatz to read the memory space of the Local System Authority (LSASS) process and obtain any credentials stored in memory. |
+| **SeImpersonatePrivilege** | This privilege allows us to impersonate a token of a privileged account such as NT AUTHORITY\SYSTEM. This could be leveraged with a tool such as JuicyPotato, RogueWinRM, PrintSpoofer, etc., to escalate privileges on a target system. |
+| **SeLoadDriverPrivilege** | A user with this privilege can load and unload device drivers that could potentially be used to escalate privileges or compromise a system. |
+| **SeTakeOwnershipPrivilege** | This allows a process to take ownership of an object. At its most basic level, we could use this privilege to gain access to a file share or a file on a share that was otherwise not accessible to us. |
+
+To see the user privileges, we can run:
+
+```ps1
+PS C:\htb> whoami /priv
+
+PRIVILEGES INFORMATION
+----------------------
+
+Privilege Name                Description                    State
+============================= ============================== ========
+SeChangeNotifyPrivilege       Bypass traverse checking       Enabled
+SeIncreaseWorkingSetPrivilege Increase a process working set Disabled
+```
+
+If we enter the same command from an elevated PowerShell console, we can see the complete listing of rights available to us:
+
+```ps1
+PS C:\htb> whoami /priv
+
+PRIVILEGES INFORMATION
+----------------------
+
+Privilege Name                            Description                                                        State
+========================================= ================================================================== ========
+SeIncreaseQuotaPrivilege                  Adjust memory quotas for a process                                 Disabled
+SeMachineAccountPrivilege                 Add workstations to domain                                         Disabled
+SeSecurityPrivilege                       Manage auditing and security log                                   Disabled
+SeTakeOwnershipPrivilege                  Take ownership of files or other objects                           Disabled
+SeLoadDriverPrivilege                     Load and unload device drivers                                     Disabled
+SeSystemProfilePrivilege                  Profile system performance                                         Disabled
+SeSystemtimePrivilege                     Change the system time                                             Disabled
+SeProfileSingleProcessPrivilege           Profile single process                                             Disabled
+SeIncreaseBasePriorityPrivilege           Increase scheduling priority                                       Disabled
+SeCreatePagefilePrivilege                 Create a pagefile                                                  Disabled
+SeBackupPrivilege                         Back up files and directories                                      Disabled
+SeRestorePrivilege                        Restore files and directories                                      Disabled
+SeShutdownPrivilege                       Shut down the system                                               Disabled
+SeDebugPrivilege                          Debug programs                                                     Enabled
+SeSystemEnvironmentPrivilege              Modify firmware environment values                                 Disabled
+SeChangeNotifyPrivilege                   Bypass traverse checking                                           Enabled
+SeRemoteShutdownPrivilege                 Force shutdown from a remote system                                Disabled
+SeUndockPrivilege                         Remove computer from docking station                               Disabled
+SeEnableDelegationPrivilege               Enable computer and user accounts to be trusted for delegation     Disabled
+SeManageVolumePrivilege                   Perform volume maintenance tasks                                   Disabled
+SeImpersonatePrivilege                    Impersonate a client after authentication                          Enabled
+SeCreateGlobalPrivilege                   Create global objects                                              Enabled
+SeIncreaseWorkingSetPrivilege             Increase a process working set                                     Disabled
+SeTimeZonePrivilege                       Change the time zone                                               Disabled
+SeCreateSymbolicLinkPrivilege             Create symbolic links                                              Disabled
+SeDelegateSessionUserImpersonatePrivilege Obtain an impersonation token for another user in the same session Disabled
+```
