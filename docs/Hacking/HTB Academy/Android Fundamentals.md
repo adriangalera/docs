@@ -30,20 +30,20 @@ In order to have full `root` access to the device, you need to exploit some secu
 
 ## Import directories
 
-| Directory                          | Description                                                                                                                  |
-|------------------------------------|------------------------------------------------------------------------------------------------------------------------------|
-| /data/data                         | Contains all the applications that are installed by the user                                                                 |
-| /data/user/0                       | Contains data that only the app can access                                                                                   |
-| /data/app                          | Contains the APKs of the applications that are installed by the user                                                         |
-| /system/app                        | Contains the pre-installed applications of the device                                                                        |
-| /system/bin                        | Contains binary files                                                                                                         |
-| /data/local/tmp                    | A world-writable directory                                                                                                    |
-| /data/system                       | Contains system configuration files                                                                                           |
-| /etc/apns-conf.xml                 | Contains the default Access Point Name (APN) configurations. APN is used in order for the device to connect with the carrier |
-| /data/misc/wifi                    | Contains WiFi configuration files                                                                                             |
-| /data/misc/user/0/cacerts-added   | User certificate store. It contains certificates added by the user                                                            |
-| /etc/security/cacerts/            | System certificate store. Permission to non-root users is not permitted                                                       |
-| /sdcard                            | Contains a symbolic link to the directories DCIM, Downloads, Music, Pictures, etc.                                           |
+| Directory                       | Description                                                                                                                  |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| /data/data                      | Contains all the applications that are installed by the user                                                                 |
+| /data/user/0                    | Contains data that only the app can access                                                                                   |
+| /data/app                       | Contains the APKs of the applications that are installed by the user                                                         |
+| /system/app                     | Contains the pre-installed applications of the device                                                                        |
+| /system/bin                     | Contains binary files                                                                                                        |
+| /data/local/tmp                 | A world-writable directory                                                                                                   |
+| /data/system                    | Contains system configuration files                                                                                          |
+| /etc/apns-conf.xml              | Contains the default Access Point Name (APN) configurations. APN is used in order for the device to connect with the carrier |
+| /data/misc/wifi                 | Contains WiFi configuration files                                                                                            |
+| /data/misc/user/0/cacerts-added | User certificate store. It contains certificates added by the user                                                           |
+| /etc/security/cacerts/          | System certificate store. Permission to non-root users is not permitted                                                      |
+| /sdcard                         | Contains a symbolic link to the directories DCIM, Downloads, Music, Pictures, etc.                                           |
 
 ## Android Security
 
@@ -277,3 +277,61 @@ we can define this intent-filter to capture it:
 ```
 
 If the app that handles the deep link isn't installed, the link will open in a web browser listing the products. 
+
+### Android Debug Bride
+
+Android Debug Bridge (ADB) is a versatile command-line tool that enables communication between a computer and a device. It allows developers to perform tasks like installing and debugging applications, transferring files between the host computer and the device, and accessing the device through a shell.
+
+Here, there are some useful adb commands:
+
+| Command                                  | Description                          |
+| ---------------------------------------- | ------------------------------------ |
+| `adb help`                               | List all commands.                   |
+| `adb kill-server`                        | Kills the adb server.                |
+| `adb devices`                            | Lists connected devices.             |
+| `adb root`                               | Restarts adbd with root permissions. |
+| `adb install <apk>`                      | Install app.                         |
+| `adb push <local> <remote>`              | Copy file/dir to device.             |
+| `adb pull <remote> <local>`              | Copy file/dir from device.           |
+| `adb logcat [options] [filter] [filter]` | View device log.                     |
+| `adb shell`                              | Opens a shell in the device.         |
+
+### Android penetration testing
+
+- Enumeration and information gathering
+
+Gather information about the app and its architecture.
+Understand the functionality of the application.
+Enumerate any data structure the app uses that is stored in the local storage.
+
+- Static analysis
+
+Understand the manifest file of the application. Review the app's components, permissions, and configurations.
+Decompile and analyze the application's source code to understand the flow and find potential vulnerabilities.
+Examine native or third-party libraries, frameworks, and dependencies the app uses.
+
+- Dynamic analysis
+
+Monitor the application's behavior during runtime. Enumerate the local storage for files and data structures created after performing various functionalities.
+Perform dynamic instrumentation to read the memory of the application during runtime.
+Intercept network traffic and test the app for vulnerabilities such as authentication bypass and insecure data transmission.
+Check for Server-Side attacks by analyzing API calls and looking for vulnerabilities such as injection and XSS attacks.
+
+Suggested tools:
+
+- `adb`: command-line tool to communicate with Android devices.
+- `JADX`: This tool allows us to reverse engineer an application and view its source code through a graphical interface. It provides the user with a Java-like pseudocode that is close enough to the actual code.
+- `APKTool`: This tool also allows reverse engineering Android applications. It will decompile the source code and decode the resources of the APK file. APKTool also enables us to edit the source code and configuration files, recompile the code, and build the APK file again.
+- `Ghidra`: Ghidra is often used to analyze the native C++ libraries loaded to the application.
+- `Burp Suite`: to analyze HTTP communication
+- `Frida`: A dynamic instrumentation toolkit used by developers, reverse engineers, and security researchers. It enables us to inject snippets of JavaScript or native code into the running processes of Android applications, allowing us to analyze and manipulate them during runtime.
+- `Autopsy`: Autopsy will help us investigate disk images of Android devices and let us search for files, databases, calls, messages, and logs, using the provided GUI.
+
+There's also some automated tools:
+
+- `MobSF`: An automated security testing framework for Android, iOS, and Windows platforms that performs static, dynamic, and malware analysis on mobile applications.
+- `Drozer`: A comprehensive security and attack framework that allows us to assess the security of Android applications. It simulates various attack vectors and provides multiple tools to analyze, exploit, and debug Android applications.
+- `Qark`: A static code analysis tool that automates the discovery of security vulnerabilities in Android applications. It can also create Proof-of-Concept deployable APKs and ADB commands to exploit the vulnerabilities it finds.
+- `Objection`: A runtime mobile exploration toolkit that uses Frida to provide an easy environment for assessing Android and iOS application security. It automates several common tasks, such as bypassing SSL pinning, and users won't be needed to create custom scripts whenever they need to exploit common vulnerabilities.
+- `Medusa`: An extensible and modularized framework that automates processes and techniques practiced during the dynamic analysis of Android Applications. Medusa is based on Frida and can analyze and enumerate an app, attack common entry points, and automate processes like application patching, MITM attack, and more. Medusa can add and remove hooks for Java or Native methods and has more than 90 modules that can be combined.
+- `Androbugs`: automatically scans Android applications and checks for security issues and vulnerabilities.
