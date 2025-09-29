@@ -94,6 +94,8 @@ Sysmon logs are stored as part of the Windows Event Log system. The logs are loc
 
 `C:\Windows\System32\winevt\Logs\Microsoft-Windows-Sysmon%4Operational.evtx`
 
+Event ID 1 in sysmon logs are events for process creation.
+
 - Command Line Logging
 
 Command Line Logging captures information about processes and their command-line arguments, which is useful for detecting suspicious activity, such as unauthorized execution of commands. The relevant Windows event ID is 4688 (A new process has been created). These can be seen in Windows Event Log, Sysmon and JonMon.
@@ -141,3 +143,67 @@ Memory dumping is a vital capability in forensic investigations, enabling the ca
 We can use `DumpIt` or `WinPmem` to create a full memory dump.
 
 To analyze the memory, we'll use `Volatility v2/3`.
+
+## Linux toolings
+
+System monitoring and auditing
+
+| Tool           | Path             | Description                                    |
+| -------------- | ---------------- | ---------------------------------------------- |
+| Sysmon (Linux) | /usr/bin/sysmon  | Provides detailed event logging and detection. |
+| Auditd         | /usr/sbin/auditd | Auditing tool to track system-level events.    |
+
+
+Threat detection and monitoring
+
+| Tool         | Path                         | Description                                               |
+| ------------ | ---------------------------- | --------------------------------------------------------- |
+| YARA         | /usr/local/bin/yara          | Signature-based file scanning tool.                       |
+| Sigma        | /usr/local/bin/sigma         | Generic signature format for SIEM rule creation.          |
+| Suricata     | /usr/bin/suricata            | Open-source IDS/IPS with network monitoring capabilities. |
+| osquery      | /usr/bin/osqueryi            | Endpoint monitoring using SQL-like queries.               |
+| Zircolite    | /root/zircolite/zircolite.py | Sigma-based EVTX log analysis.                            |
+| Velociraptor | /usr/local/bin/velociraptor  | Endpoint monitoring, collection, and response.            |
+| bpftrace     | /usr/bin/bpftrace            | High-level tracing language for Linux                     |
+
+
+Traffic capturing: tcpdump / wireshark
+
+Memory extractor: LiME: `/root/LiME/src/lime-5.15.0-71-generic.ko`
+
+Memory dump analysis: Volatility v2: `/root/volatility-master/vol.py`
+
+Adversary simulation: Atomic Read team: `/root/AtomicRedTeam`. Small and highly portable detection tests based on MITRE's ATT&CK.
+
+## Linux logging
+
+Sysmon exists in Linux as well and you can see the output in syslog:
+
+```bash
+cat /var/log/syslog | /opt/sysmon/sysmonLogView
+```
+
+`audit` is a Linux daemon that collects, processes, and records audit log events to disk.
+
+The logs are stored in `/var/log/audit/audit.log`. You can use `aureport` or `ausearch` to analyze them efficiently:
+
+```bash
+ausearch -k rootcmd -i
+```
+
+## Dumping memory in Linux
+
+We'll use LiME (Linux Memory Extractor) kernel module to dump memory:
+
+```bash
+sudo insmod lime-5.15.0-71-generic.ko "path=/tmp/dump.mem format=lime"
+```
+
+To analyze the dump, one can use `Volatily v2`. In this example, we are interested in knowing which active tasks are in the memory dump:
+
+```bash
+python2.7 vol.py -f /tmp/dump.mem --profile=LinuxUbuntu_5_15_0-71-generic_profilex64 linux_pslist
+```
+
+- `--profile=LinuxUbuntu_5_15_0-71-generic_profilex64` specifies the memory format
+- `linux_pslist` is a volatility plugin to retrieve the list of processes in the particular dump.

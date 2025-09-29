@@ -28,3 +28,15 @@ Enable clipboard: `+clipboard`, e.g:
 ```bash
 xfreerdp /v:10.129.202.146 /u:htb-student_adm /p:Academy_student_DA! +clipboard /timeout:10000
 ```
+
+To enable smart-sizing and ease of use with `i3` windows manager, one can use the following command with options:
+
+```bash
+xfreerdp3 /u:Administrator /p:"pwd" /v:10.129.229.26 /smart-sizing /floatbar -grab-keyboard
+```
+
+or
+
+```bash
+xfreerdp3 /u:Administrator /p:"pwd" /v:10.129.229.26 /size:99% -grab-keyboard
+```
