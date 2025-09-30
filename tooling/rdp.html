@@ -7,8 +7,8 @@
 <link rel="preconnect" href="https://www.googletagmanager.com">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-S8VGYBN25C"></script>
 <script>function gtag(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],gtag("js",new Date),gtag("config","G-S8VGYBN25C",{anonymize_ip:!0})</script><link rel="stylesheet" href="/docs/assets/css/styles.f96ca0f1.css">
-<script src="/docs/assets/js/runtime~main.0d26231b.js" defer="defer"></script>
-<script src="/docs/assets/js/main.caf6e7de.js" defer="defer"></script>
+<script src="/docs/assets/js/runtime~main.3cd40d96.js" defer="defer"></script>
+<script src="/docs/assets/js/main.4c217ef9.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
 <svg xmlns="http://www.w3.org/2000/svg" style="display: none;"><defs>
@@ -23,6 +23,10 @@
 <div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">xfreerdp /v:10.10.10.132 /d:HTB /u:administrator /p:&#x27;Password0@&#x27; /drive:linux,/home/plaintext/htb/academy/filetransfer</span><br></span></code></pre></div></div>
 <p>To access the directory, we can connect to \tsclient\ in the Windows machine.</p>
 <p>Enable clipboard: <code>+clipboard</code>, e.g:</p>
-<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">xfreerdp /v:10.129.202.146 /u:htb-student_adm /p:Academy_student_DA! +clipboard /timeout:10000</span><br></span></code></pre></div></div></div></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="Docs pages"></nav></div></div></div></div></main></div></div></div></div>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">xfreerdp /v:10.129.202.146 /u:htb-student_adm /p:Academy_student_DA! +clipboard /timeout:10000</span><br></span></code></pre></div></div>
+<p>To enable smart-sizing and ease of use with <code>i3</code> windows manager, one can use the following command with options:</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">xfreerdp3 /u:Administrator /p:&quot;pwd&quot; /v:10.129.229.26 /smart-sizing /floatbar -grab-keyboard</span><br></span></code></pre></div></div>
+<p>or</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">xfreerdp3 /u:Administrator /p:&quot;pwd&quot; /v:10.129.229.26 /size:99% -grab-keyboard</span><br></span></code></pre></div></div></div></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="Docs pages"></nav></div></div></div></div></main></div></div></div></div>
 </body>
 </html>
