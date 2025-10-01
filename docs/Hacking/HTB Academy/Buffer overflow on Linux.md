@@ -19,8 +19,6 @@ Programs store data and instructions in memory during initialization and executi
 
 This this type of attack rely on a mismanagement of application memory, first we need to understand how the memory is structured.
 
-TODO: ADD A DIAGRAM!
-
 - .text: actual assembler instructions of the program. Usually this section is read-only. Any write attempt will likely result in Segmentation Fault.
 - .data: contains global and static data defined by the program.
 - .bss: Several compilers and linkers use the this section as part of the data segment, which contains statically allocated variables represented exclusively by 0 bits.
@@ -147,7 +145,7 @@ With such large input, the base of the stack is surpassed and we have overwritte
 
 ## Determine the offset
 
-To determine the offset, we can use Metasplit framework. It will create a unique pattern of the specified length. When passed as input to the program, we'll see which part of the pattern leaks into the EIP.
+To determine the offset, we can use Metasplit framework. It will create a unique pattern of the specified length. When passed as input to the program, we'll see which part of the pattern leaks into the EIP. In this step, we want to cause a segmentation fault and see the registers at the end, i.e. don't set any breakpoints.
 
 ```shell
 /usr/share/metasploit-framework/tools/exploit/pattern_create.rb -l 1200 > pattern.txt
@@ -173,6 +171,7 @@ eip            0x69423569 0x69423569
 
 [*] Exact match at offset 1036
 ```
+
 
 So, now we can write exactly at EIP with the following input:
 
@@ -273,6 +272,8 @@ We see that the first byte in CHARS, `0x00` is not present, hence we cannot use 
 
 This process must be repeated until all characters that could interrupt the flow are removed.
 
+Usually bad characters are: "\x00\x09\x0a\x20"
+
 ## Generating the shellcode
 
 Now we can tell `msfvenom` we don't want to use those bad characters in the shellcode:
@@ -356,3 +357,18 @@ The best protection against buffer overflows is security-conscious programming. 
 - Address Space Layout Randomization (ASLR): it makes difficult to find addresses in memory. The operating system uses ASLR to hide the relevant memory addresses from us.
 
 - Data Execution Prevention (DEP): programs are monitored during execution to ensure that they access memory areas cleanly. DEP terminates the program if a program attempts to call or access the program code in an unauthorized manner.
+
+## Python2 vs Python3
+
+All previous usages of `python` are Python2.x. In python 3.x `print` function re-encodes the bytes. For example: it will re-encode the Unicode '\x90' and may produce 0xC2 0x90 instead of 0x90.
+
+For python3 it is better to generate a binary file and pass the contents of it to the gdb run command. For example:
+
+```shell
+python3 -c "open('/tmp/p.bin','wb').write(b'\x55'*1960 + b'\x90'*100 + b'\x66'*4)"
+r $(cat /tmp/p.bin)
+```
+
+## gdb or normal execution
+
+Bear in mind that when the program is run from `gdb`, the user that is running the program might be different than the normal execution. In some example the binary will lead to root access while running the binary from gdb will lead to normal user.
