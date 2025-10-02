@@ -1,7 +1,4 @@
----
-draft: true
----
-# Buffer overflow on Linux
+# Stack based buffer overflow on Linux
 
 What is a buffer overflow?
 
@@ -171,7 +168,6 @@ eip            0x69423569 0x69423569
 
 [*] Exact match at offset 1036
 ```
-
 
 So, now we can write exactly at EIP with the following input:
 
@@ -372,3 +368,13 @@ r $(cat /tmp/p.bin)
 ## gdb or normal execution
 
 Bear in mind that when the program is run from `gdb`, the user that is running the program might be different than the normal execution. In some example the binary will lead to root access while running the binary from gdb will lead to normal user.
+
+## Summary
+
+The whole process can be summarized with:
+
+- Provide a very large input to see if the binary is vulnerable to buffer overflow.
+- Once we knwow it is vulnerable, we need to know the offset to write the EIP pointer.
+- We need to identify what characters and what not can be used in the shellcode.
+- Create the shellcode avoiding the bad characters
+- Jumping to Shellcode: find the proper memory address to write in the EIP.
