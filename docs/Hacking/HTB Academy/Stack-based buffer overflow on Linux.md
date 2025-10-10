@@ -136,7 +136,7 @@ gs             0x63 99
 
 Visually, the memory will look like this:
 
-![Memory state with huge input](20250930_201840_stack.jpg)
+![Memory state with huge input](stack-large-input.jpg)
 
 With such large input, the base of the stack is surpassed and we have overwritten the EIP with `\x55`. However, to write exactly into the EIP, we need to know exactly how many `\x55` characters we need to write to be at the EIP. Once we are at the EIP, the next 4 bytes will contain our desired memory address.
 
@@ -211,7 +211,7 @@ EIP = "\x66" * 4
 
 And visually:
 
-![Memory contents with the shellcode](stack_with_shellcode.jpg)
+![Memory contents with the shellcode](stack-shellcode.jpg)
 
 ## Bad characters
 
