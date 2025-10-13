@@ -2,7 +2,7 @@
 
 Enter the database:
 
-``shell
+```shell
 sqlite3 users.db
 ```
 
@@ -12,8 +12,20 @@ Show all tables:
 SELECT name FROM sqlite_master WHERE type='table';
 ```
 
+or
+
+```bash
+.tables
+```
+
 Show table schema:
 
 ```shell
 .schema table_name
+```
+
+or
+
+```bash
+pragma table_info(users);
 ```
