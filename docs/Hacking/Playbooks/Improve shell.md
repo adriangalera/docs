@@ -24,6 +24,7 @@ You can find mmore methods to improve the shell here https://blog.ropnop.com/upg
 
 ```bash
 script -q /dev/null -c bash
+export TERM=xterm
 ```
 
 or
